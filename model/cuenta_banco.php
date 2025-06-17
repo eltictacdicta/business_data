@@ -141,6 +141,20 @@ class cuenta_banco extends \fs_model
         return $cuentalist;
     }
 
+    /**
+     * Devuelve todas las cuentas bancarias de la empresa
+     * Método requerido por facturacion_base
+     * 
+     * @return array Lista de cuentas bancarias
+     */
+    public function all_from_empresa()
+    {
+        // En este caso, todas las cuentas banco pertenecen a la empresa
+        // Si en el futuro necesitas filtrar por empresa específica, 
+        // puedes modificar esta consulta
+        return $this->all();
+    }
+
     private function clear()
     {
         $this->codcuenta = NULL;

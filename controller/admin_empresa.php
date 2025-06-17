@@ -21,14 +21,15 @@ require_once 'extras/phpmailer/class.smtp.php';
 require_once 'base/fs_divisa_tools.php';
 require_once 'base/fs_default_items.php';
 
-use FacturaScripts\model\almacen;
-use FacturaScripts\model\cuenta_banco;
-use FacturaScripts\model\divisa;
-use FacturaScripts\model\ejercicio;
-use FacturaScripts\model\forma_pago;
-use FacturaScripts\model\serie;
-use FacturaScripts\model\pais;
-use FacturaScripts\model\empresa;
+// Cargar clases de compatibilidad
+require_once dirname(__FILE__) . '/../model/empresa_compat.php';
+require_once dirname(__FILE__) . '/../model/almacen_compat.php';
+require_once dirname(__FILE__) . '/../model/cuenta_banco_compat.php';
+require_once dirname(__FILE__) . '/../model/divisa_compat.php';
+require_once dirname(__FILE__) . '/../model/ejercicio_compat.php';
+require_once dirname(__FILE__) . '/../model/forma_pago_compat.php';
+require_once dirname(__FILE__) . '/../model/serie_compat.php';
+require_once dirname(__FILE__) . '/../model/pais_compat.php';
 
 /**
  * Controlador de admin -> empresa.
@@ -65,8 +66,42 @@ class admin_empresa extends fs_controller
     {
         parent::__construct(__CLASS__, 'Empresa / web', 'admin', TRUE, TRUE);
         
+        // Inicializar empresa antes que cualquier otra cosa
+        $this->initialize_empresa();
+        
         // Initialize default items and empresa-related settings
         $this->initialize_default_items();
+    }
+
+    /**
+     * Inicializa la empresa asegurando que esté disponible
+     */
+    protected function initialize_empresa()
+    {
+        if (!isset($this->empresa) || !$this->empresa) {
+            $this->empresa = new empresa();
+            $empresa_data = $this->empresa->get();
+            if ($empresa_data) {
+                $this->empresa = $empresa_data;
+            } else {
+                // Si no hay datos de empresa, asegurar que el objeto tenga propiedades básicas inicializadas
+                $this->empresa->nombre = '';
+                $this->empresa->nombrecorto = '';
+                $this->empresa->web = '';
+                $this->empresa->email = '';
+                $this->empresa->email_config = array(
+                    'mail_mailer' => 'smtp',
+                    'mail_host' => '',
+                    'mail_port' => 587,
+                    'mail_user' => '',
+                    'mail_password' => '',
+                    'mail_enc' => 'tls',
+                    'mail_low_security' => false,
+                    'mail_bcc' => '',
+                    'mail_firma' => ''
+                );
+            }
+        }
     }
 
     /**
@@ -78,24 +113,24 @@ class admin_empresa extends fs_controller
             $this->default_items = new fs_default_items();
         }
 
-        if (isset($this->empresa) && $this->empresa && $this->empresa->id) {
+        if (isset($this->empresa) && $this->empresa && isset($this->empresa->id) && $this->empresa->id) {
             // Set all default items based on empresa configuration
-            if ($this->empresa->codejercicio) {
+            if (isset($this->empresa->codejercicio) && $this->empresa->codejercicio) {
                 $this->default_items->set_codejercicio($this->empresa->codejercicio);
             }
-            if ($this->empresa->codalmacen) {
+            if (isset($this->empresa->codalmacen) && $this->empresa->codalmacen) {
                 $this->default_items->set_codalmacen($this->empresa->codalmacen);
             }
-            if ($this->empresa->codpago) {
+            if (isset($this->empresa->codpago) && $this->empresa->codpago) {
                 $this->default_items->set_codpago($this->empresa->codpago);
             }
-            if ($this->empresa->codpais) {
+            if (isset($this->empresa->codpais) && $this->empresa->codpais) {
                 $this->default_items->set_codpais($this->empresa->codpais);
             }
-            if ($this->empresa->codserie) {
+            if (isset($this->empresa->codserie) && $this->empresa->codserie) {
                 $this->default_items->set_codserie($this->empresa->codserie);
             }
-            if ($this->empresa->coddivisa) {
+            if (isset($this->empresa->coddivisa) && $this->empresa->coddivisa) {
                 $this->default_items->set_coddivisa($this->empresa->coddivisa);
             }
         }
@@ -103,14 +138,8 @@ class admin_empresa extends fs_controller
 
     protected function private_core()
     {
-        /// Inicializamos la empresa
-        if (!isset($this->empresa)) {
-            $this->empresa = new empresa();
-            $empresa_data = $this->empresa->get();
-            if ($empresa_data) {
-                $this->empresa = $empresa_data;
-            }
-        }
+        /// Asegurar que la empresa esté inicializada
+        $this->initialize_empresa();
         
         // Initialize default items when empresa data changes
         $this->initialize_default_items();
