@@ -1,7 +1,8 @@
 <?php
 /**
- * This file is part of FacturaScripts
- * Copyright (C) 2013-2018 Carlos Garcia Gomez <neorazorx@gmail.com>
+ * This file is part of FSFramework originally based on Facturascript 2017
+ * Copyright (C) 2025 Javier Trujillo <mistertekcom@gmail.com>
+ * Copyright (C) 2013-2020 Carlos Garcia Gomez <neorazorx@gmail.com> (lead developer of Facturascript)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
