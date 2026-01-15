@@ -44,15 +44,15 @@ class admin_empresa extends fs_controller
     public $divisa;
     public $ejercicio;
     public $forma_pago;
-    public $impresion;
+    public $impresion = array();
     public $serie;
     public $pais;
-    
+
     /**
      * @var empresa
      */
     public $empresa;
-    
+
     /**
      * @var fs_divisa_tools
      */
@@ -63,13 +63,23 @@ class admin_empresa extends fs_controller
      */
     public $default_items;
 
+    /**
+     * @var array
+     */
+    public $email_plantillas = array();
+
+    /**
+     * @var string
+     */
+    public $logo = '';
+
     public function __construct()
     {
         parent::__construct(__CLASS__, 'Empresa / web', 'admin', TRUE, TRUE);
-        
+
         // Inicializar empresa antes que cualquier otra cosa
         $this->initialize_empresa();
-        
+
         // Initialize default items and empresa-related settings
         $this->initialize_default_items();
     }
@@ -141,11 +151,11 @@ class admin_empresa extends fs_controller
     {
         /// Asegurar que la empresa esté inicializada
         $this->initialize_empresa();
-        
+
         // Initialize default items when empresa data changes
         $this->initialize_default_items();
-        
-        /// inicializamos para que se creen las tablas, aunque no vayamos a configurarlo aquí
+
+        /// inicializamos para que se creen las tablas
         $this->almacen = new almacen();
         $this->cuenta_banco = new cuenta_banco();
         $this->divisa = new divisa();
@@ -153,17 +163,64 @@ class admin_empresa extends fs_controller
         $this->forma_pago = new forma_pago();
         $this->serie = new serie();
         $this->pais = new pais();
-        
+
+        $fsvar = new fs_var();
+
+        /// obtenemos los datos de configuración de impresión
+        $this->impresion = array(
+            'print_ref' => '1',
+            'print_dto' => '1',
+            'print_alb' => '0',
+            'print_formapago' => '1'
+        );
+        $this->impresion = $fsvar->array_get($this->impresion, FALSE);
+
+        /// obtenemos los datos de las plantillas de emails
+        $this->email_plantillas = array(
+            'mail_factura' => "Buenos días, le adjunto su #DOCUMENTO#.\n#FIRMA#",
+            'mail_albaran' => "Buenos días, le adjunto su #DOCUMENTO#.\n#FIRMA#",
+            'mail_pedido' => "Buenos días, le adjunto su #DOCUMENTO#.\n#FIRMA#",
+            'mail_presupuesto' => "Buenos días, le adjunto su #DOCUMENTO#.\n#FIRMA#",
+        );
+        $this->email_plantillas = $fsvar->array_get($this->email_plantillas, FALSE);
+
         /// Inicializamos las herramientas de divisa con la divisa de la empresa
         $coddivisa = ($this->empresa && $this->empresa->coddivisa) ? $this->empresa->coddivisa : 'EUR';
         $this->divisa_tools = new fs_divisa_tools($coddivisa);
 
         if (filter_input(INPUT_POST, 'nombre')) {
-            /// guardamos solamente lo básico, ya que facturacion_base no está activado
-            $this->empresa->nombre = filter_input(INPUT_POST, 'nombre');
-            $this->empresa->nombrecorto = filter_input(INPUT_POST, 'nombrecorto');
-            $this->empresa->web = filter_input(INPUT_POST, 'web');
-            $this->empresa->email = filter_input(INPUT_POST, 'email');
+            $fields = [
+                'nombre',
+                'nombrecorto',
+                'cifnif',
+                'administrador',
+                'codpais',
+                'provincia',
+                'ciudad',
+                'direccion',
+                'codpostal',
+                'apartado',
+                'telefono',
+                'fax',
+                'web',
+                'email',
+                'lema',
+                'horario',
+                'codejercicio',
+                'codserie',
+                'coddivisa',
+                'codpago',
+                'codalmacen',
+                'pie_factura'
+            ];
+            foreach ($fields as $field) {
+                $value = filter_input(INPUT_POST, $field);
+                if ($value !== NULL) {
+                    $this->empresa->{$field} = $value;
+                }
+            }
+            $this->empresa->contintegrada = (bool) filter_input(INPUT_POST, 'contintegrada');
+            $this->empresa->recequivalencia = (bool) filter_input(INPUT_POST, 'recequivalencia');
 
             /// configuración de email
             $this->empresa->email_config['mail_password'] = filter_input(INPUT_POST, 'mail_password');
@@ -177,14 +234,79 @@ class admin_empresa extends fs_controller
             $this->empresa->email_config['mail_low_security'] = (bool) filter_input(INPUT_POST, 'mail_low_security');
 
             if ($this->empresa->save()) {
+                /// guardamos las opciones por defecto de almacén y forma de pago
+                $this->save_codalmacen(filter_input(INPUT_POST, 'codalmacen'));
+                $this->save_codpago(filter_input(INPUT_POST, 'codpago'));
+
                 $this->new_message('Datos guardados correctamente.');
                 $this->mail_test();
-                
+
                 // Actualizamos los valores por defecto después de guardar
                 $this->initialize_default_items();
             } else {
                 $this->new_error_msg('Error al guardar los datos.');
             }
+
+            /// guardamos los datos de impresión
+            $this->impresion['print_ref'] = (filter_input(INPUT_POST, 'print_ref') ? 1 : 0);
+            $this->impresion['print_dto'] = (filter_input(INPUT_POST, 'print_dto') ? 1 : 0);
+            $this->impresion['print_alb'] = (filter_input(INPUT_POST, 'print_alb') ? 1 : 0);
+            $this->impresion['print_formapago'] = (filter_input(INPUT_POST, 'print_formapago') ? 1 : 0);
+            $fsvar->array_save($this->impresion);
+
+            /// guardamos las plantillas de emails
+            $this->email_plantillas['mail_factura'] = filter_input(INPUT_POST, 'mail_factura');
+            $this->email_plantillas['mail_albaran'] = filter_input(INPUT_POST, 'mail_albaran');
+            if (filter_input(INPUT_POST, 'mail_pedido')) {
+                $this->email_plantillas['mail_pedido'] = filter_input(INPUT_POST, 'mail_pedido');
+                $this->email_plantillas['mail_presupuesto'] = filter_input(INPUT_POST, 'mail_presupuesto');
+            }
+            $fsvar->array_save($this->email_plantillas);
+        } else if (filter_input(INPUT_POST, 'logo')) {
+            $this->cambiar_logo();
+        } else if (filter_input(INPUT_GET, 'delete_logo')) {
+            $this->delete_logo();
+        } else if (filter_input(INPUT_GET, 'delete_cuenta')) { /// eliminar cuenta bancaria
+            $cuenta = $this->cuenta_banco->get(filter_input(INPUT_GET, 'delete_cuenta'));
+            if ($cuenta) {
+                if ($cuenta->delete()) {
+                    $this->new_message('Cuenta bancaria eliminada correctamente.');
+                } else {
+                    $this->new_error_msg('Imposible eliminar la cuenta bancaria.');
+                }
+            } else {
+                $this->new_error_msg('Cuenta bancaria no encontrada.');
+            }
+        } else if (filter_input(INPUT_POST, 'iban')) { /// añadir/modificar cuenta bancaria
+            if (filter_input(INPUT_POST, 'codcuenta')) {
+                $cuentab = $this->cuenta_banco->get(filter_input(INPUT_POST, 'codcuenta'));
+            } else {
+                $cuentab = new cuenta_banco();
+            }
+
+            $cuentab->descripcion = filter_input(INPUT_POST, 'descripcion');
+            $cuentab->iban = filter_input(INPUT_POST, 'iban');
+            $cuentab->swift = filter_input(INPUT_POST, 'swift');
+
+            $cuentab->codsubcuenta = NULL;
+            if (filter_input(INPUT_POST, 'codsubcuenta')) {
+                $cuentab->codsubcuenta = filter_input(INPUT_POST, 'codsubcuenta');
+            }
+
+            if ($cuentab->save()) {
+                $this->new_message('Cuenta bancaria guardada correctamente.');
+            } else {
+                $this->new_error_msg('Imposible guardar la cuenta bancaria.');
+            }
+        } else {
+            $this->fix_logo();
+        }
+
+        $this->load_logo();
+
+        // Llamando la funcion que realiza el autocomplete
+        if (filter_input(INPUT_GET, 'subcuenta')) {
+            $this->buscar_subcuenta(filter_input(INPUT_GET, 'subcuenta'));
         }
     }
 
@@ -256,6 +378,58 @@ class admin_empresa extends fs_controller
         $this->new_error_msg("¿<a href='" . FS_COMMUNITY_URL . "/contacto' target='_blank'>Necesitas ayuda</a>?");
     }
 
+    private function fix_logo()
+    {
+        if (!file_exists(FS_MYDOCS . 'images')) {
+            @mkdir(FS_MYDOCS . 'images', 0777, TRUE);
+        }
+
+        if (file_exists('tmp/' . FS_TMP_NAME . 'logo.png')) {
+            rename('tmp/' . FS_TMP_NAME . 'logo.png', FS_MYDOCS . 'images/logo.png');
+        } else if (file_exists('tmp/' . FS_TMP_NAME . 'logo.jpg')) {
+            rename('tmp/' . FS_TMP_NAME . 'logo.jpg', FS_MYDOCS . 'images/logo.jpg');
+        }
+    }
+
+    private function load_logo()
+    {
+        $this->logo = '';
+        if (file_exists(FS_MYDOCS . 'images/logo.png')) {
+            $this->logo = 'images/logo.png';
+        } else if (file_exists(FS_MYDOCS . 'images/logo.jpg')) {
+            $this->logo = 'images/logo.jpg';
+        }
+    }
+
+    private function cambiar_logo()
+    {
+        if (isset($_FILES['fimagen']) && is_uploaded_file($_FILES['fimagen']['tmp_name'])) {
+            if (!file_exists(FS_MYDOCS . 'images')) {
+                @mkdir(FS_MYDOCS . 'images', 0777, TRUE);
+            }
+            $this->delete_logo();
+
+            if (substr(strtolower($_FILES['fimagen']['name']), -3) == 'png') {
+                copy($_FILES['fimagen']['tmp_name'], FS_MYDOCS . "images/logo.png");
+            } else {
+                copy($_FILES['fimagen']['tmp_name'], FS_MYDOCS . "images/logo.jpg");
+            }
+
+            $this->new_message('Logotipo guardado correctamente.');
+        }
+    }
+
+    private function delete_logo()
+    {
+        if (file_exists(FS_MYDOCS . 'images/logo.png')) {
+            unlink(FS_MYDOCS . 'images/logo.png');
+            $this->new_message('Logotipo borrado correctamente.');
+        } else if (file_exists(FS_MYDOCS . 'images/logo.jpg')) {
+            unlink(FS_MYDOCS . 'images/logo.jpg');
+            $this->new_message('Logotipo borrado correctamente.');
+        }
+    }
+
     public function encriptaciones()
     {
         return array(
@@ -273,7 +447,7 @@ class admin_empresa extends fs_controller
             'smtp' => 'SMTP'
         );
     }
-    
+
     /**
      * Convierte un precio de la divisa_desde a la divisa especificada
      * @param float $precio
@@ -299,7 +473,7 @@ class admin_empresa extends fs_controller
     {
         return $this->divisa_tools->euro_convert($precio, $coddivisa, $tasaconv);
     }
-    
+
     /**
      * Devuelve un string con el número en el formato de número predeterminado.
      * @param float $num
@@ -346,7 +520,7 @@ class admin_empresa extends fs_controller
             $this->empresa->clean_cache();
         }
     }
-    
+
     /**
      * Comprueba si la empresa puede enviar correos electrónicos
      * @return boolean
@@ -355,7 +529,7 @@ class admin_empresa extends fs_controller
     {
         return $this->empresa->can_send_mail();
     }
-    
+
     /**
      * Crea un nuevo objeto de correo configurado con los datos de la empresa
      * @return \PHPMailer
@@ -364,7 +538,7 @@ class admin_empresa extends fs_controller
     {
         return $this->empresa->new_mail();
     }
-    
+
     /**
      * Conecta el objeto mail con los datos de la empresa
      * @param \PHPMailer $mail
@@ -374,7 +548,7 @@ class admin_empresa extends fs_controller
     {
         return $this->empresa->mail_connect($mail);
     }
-    
+
     /**
      * Devuelve TRUE si las configuraciones no_html de la empresa
      * @param string $txt
@@ -385,29 +559,25 @@ class admin_empresa extends fs_controller
         return $this->empresa->no_html($txt);
     }
 
-    private function share_extensions()
+    private function buscar_subcuenta($aux)
     {
-        foreach ($this->extensions as $ext) {
-            if ($ext->type == 'css') {
-                if (!file_exists($ext->text)) {
-                    $ext->delete();
-                }
-            }
+        /// desactivamos la plantilla HTML
+        $this->template = FALSE;
+
+        $json = [];
+        $subcuenta = new subcuenta();
+        $ejercicio = $this->ejercicio->get_by_fecha($this->today());
+        foreach ($subcuenta->search_by_ejercicio($ejercicio->codejercicio, $aux) as $subc) {
+            $json[] = [
+                'value' => $subc->codsubcuenta . ' - ' . $subc->descripcion,
+                'data' => $subc->codsubcuenta,
+                'saldo' => $subc->saldo,
+                'link' => $subc->url()
+            ];
         }
 
-        $extensions = array(
-            array(
-                'name' => 'divisas_empresa',
-                'page_from' => __CLASS__,
-                'page_to' => __CLASS__,
-                'type' => 'text',
-                'text' => 'plugins/business_data/view/js/divisas_empresa.js',
-                'params' => ''
-            )
-        );
-        foreach ($extensions as $ext) {
-            $fsext = new fs_extension($ext);
-            $fsext->save();
-        }
+        header('Content-Type: application/json');
+        echo json_encode(array('query' => $aux, 'suggestions' => $json));
     }
 }
+
