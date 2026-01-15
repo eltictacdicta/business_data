@@ -121,7 +121,21 @@ class almacen extends \fs_model
     {
         parent::__construct('almacenes');
         if ($data) {
-            $this->loadFromData($data);
+            $this->codalmacen = $data['codalmacen'];
+            $this->nombre = $data['nombre'];
+            $this->direccion = isset($data['direccion']) ? $data['direccion'] : '';
+            $this->codpostal = isset($data['codpostal']) ? $data['codpostal'] : '';
+            $this->poblacion = isset($data['poblacion']) ? $data['poblacion'] : '';
+            $this->provincia = isset($data['provincia']) ? $data['provincia'] : '';
+            $this->codpais = isset($data['codpais']) ? $data['codpais'] : '';
+            $this->apartado = isset($data['apartado']) ? $data['apartado'] : '';
+            $this->telefono = isset($data['telefono']) ? $data['telefono'] : '';
+            $this->fax = isset($data['fax']) ? $data['fax'] : '';
+            $this->contacto = isset($data['contacto']) ? $data['contacto'] : '';
+            $this->observaciones = isset($data['observaciones']) ? $data['observaciones'] : '';
+            $this->idprovincia = isset($data['idprovincia']) ? $data['idprovincia'] : NULL;
+            $this->porpvp = isset($data['porpvp']) ? floatval($data['porpvp']) : 0;
+            $this->tipovaloracion = isset($data['tipovaloracion']) ? $data['tipovaloracion'] : '';
         } else {
             $this->clear();
         }
@@ -129,7 +143,9 @@ class almacen extends \fs_model
 
     protected function install()
     {
-        return '';
+        return "INSERT INTO " . $this->table_name . " (codalmacen,nombre,poblacion,"
+            . "direccion,codpostal,telefono,fax,contacto) VALUES "
+            . "('ALG','ALMACEN GENERAL','','','','','','');";
     }
 
     public function url()
@@ -137,8 +153,17 @@ class almacen extends \fs_model
         if (is_null($this->codalmacen)) {
             return "index.php?page=admin_almacenes";
         } else {
-            return "index.php?page=admin_almacenes&cod=" . $this->codalmacen;
+            return "index.php?page=admin_almacenes#" . $this->codalmacen;
         }
+    }
+
+    /**
+     * Devuelve TRUE si este es almacén predeterminado de la empresa.
+     * @return bool
+     */
+    public function is_default()
+    {
+        return ( $this->codalmacen == $this->default_items->codalmacen() );
     }
 
     public function get($cod)

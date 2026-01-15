@@ -27,20 +27,61 @@ namespace FacturaScripts\model;
  */
 class serie extends \fs_model
 {
+    /**
+     * Clave primaria. Varchar (2).
+     * @var string 
+     */
     public $codserie;
     public $descripcion;
+
+    /**
+     * TRUE -> las facturas asociadas no encluyen IVA.
+     * @var boolean
+     */
     public $siniva;
+
+    /**
+     * % de retención IRPF de las facturas asociadas.
+     * @var float
+     */
     public $irpf;
+
+    /**
+     * Código de cuenta contable.
+     * @var string
+     */
     public $codcuenta;
+
+    /**
+     * ID de cuenta contable.
+     * @var integer
+     */
     public $idcuenta;
+
+    /**
+     * ejercicio para el que asignamos la numeración inicial de la serie.
+     * @var string
+     */
     public $codejercicio;
+
+    /**
+     * numeración inicial para las facturas de esta serie.
+     * @var integer
+     */
     public $numfactura;
 
     public function __construct($data = FALSE)
     {
         parent::__construct('series');
         if ($data) {
-            $this->loadFromData($data);
+            $this->codserie = $data['codserie'];
+            $this->descripcion = $data['descripcion'];
+            $this->siniva = $this->str2bool($data['siniva']);
+            $this->irpf = floatval($data['irpf']);
+            $this->codcuenta = isset($data['codcuenta']) ? $data['codcuenta'] : NULL;
+            $this->idcuenta = isset($data['idcuenta']) ? $data['idcuenta'] : NULL;
+            $this->codejercicio = isset($data['codejercicio']) ? $data['codejercicio'] : NULL;
+            $this->numfactura = isset($data['numfactura']) ? max(array(1, intval($data['numfactura']))) : 1;
         } else {
             $this->clear();
         }
@@ -48,16 +89,26 @@ class serie extends \fs_model
 
     protected function install()
     {
-        return '';
+        return "INSERT INTO " . $this->table_name . " (codserie,descripcion,siniva,irpf) VALUES "
+            . "('A','SERIE A',FALSE,'0'),('R','RECTIFICATIVAS',FALSE,'0');";
     }
 
     public function url()
     {
         if (is_null($this->codserie)) {
-            return "index.php?page=admin_series";
+            return "index.php?page=contabilidad_series";
         } else {
-            return "index.php?page=admin_series&cod=" . $this->codserie;
+            return "index.php?page=contabilidad_series#" . $this->codserie;
         }
+    }
+
+    /**
+     * Devuelve TRUE si la serie es la predeterminada de la empresa
+     * @return bool
+     */
+    public function is_default()
+    {
+        return ( $this->codserie == $this->default_items->codserie() );
     }
 
     public function get($cod)
@@ -82,12 +133,18 @@ class serie extends \fs_model
 
     public function test()
     {
+        $this->codserie = trim($this->codserie);
         $this->descripcion = $this->no_html($this->descripcion);
-        $this->codcuenta = $this->no_html($this->codcuenta);
-        $this->codejercicio = $this->no_html($this->codejercicio);
+
+        if ($this->numfactura < 1) {
+            $this->numfactura = 1;
+        }
 
         if (!preg_match("/^[A-Z0-9]{1,2}$/i", $this->codserie)) {
             $this->new_error_msg("Código de serie no válido.");
+            return FALSE;
+        } else if (strlen($this->descripcion) < 1 || strlen($this->descripcion) > 100) {
+            $this->new_error_msg("Descripción de serie no válida.");
             return FALSE;
         }
 
@@ -118,11 +175,7 @@ class serie extends \fs_model
                     $this->var2str($this->idcuenta) . "," .
                     $this->var2str($this->codejercicio) . "," .
                     $this->var2str($this->numfactura) . ");";
-                if ($this->db->exec($sql)) {
-                    return TRUE;
-                } else {
-                    return FALSE;
-                }
+                return $this->db->exec($sql);
             }
         } else {
             return FALSE;
@@ -154,9 +207,9 @@ class serie extends \fs_model
         $this->descripcion = '';
         $this->siniva = FALSE;
         $this->irpf = 0;
-        $this->codcuenta = '';
+        $this->codcuenta = NULL;
         $this->idcuenta = NULL;
-        $this->codejercicio = '';
+        $this->codejercicio = NULL;
         $this->numfactura = 1;
     }
 }

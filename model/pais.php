@@ -34,7 +34,9 @@ class pais extends \fs_model
     {
         parent::__construct('paises');
         if ($data) {
-            $this->loadFromData($data);
+            $this->codpais = $data['codpais'];
+            $this->nombre = $data['nombre'];
+            $this->codiso = isset($data['codiso']) ? $data['codiso'] : NULL;
         } else {
             $this->clear();
         }

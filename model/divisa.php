@@ -31,13 +31,18 @@ class divisa extends \fs_model
     public $codiso;
     public $simbolo;
     public $tasaconv;
-    public $tasaconvcompra;
+    public $tasaconv_compra;
 
     public function __construct($data = FALSE)
     {
         parent::__construct('divisas');
         if ($data) {
-            $this->loadFromData($data);
+            $this->coddivisa = $data['coddivisa'];
+            $this->descripcion = $data['descripcion'];
+            $this->tasaconv = floatval($data['tasaconv']);
+            $this->codiso = isset($data['codiso']) ? $data['codiso'] : NULL;
+            $this->simbolo = isset($data['simbolo']) ? $data['simbolo'] : '?';
+            $this->tasaconv_compra = isset($data['tasaconv_compra']) ? floatval($data['tasaconv_compra']) : floatval($data['tasaconv']);
         } else {
             $this->clear();
         }
@@ -45,16 +50,34 @@ class divisa extends \fs_model
 
     protected function install()
     {
-        return '';
+        return "INSERT INTO " . $this->table_name . " (coddivisa,descripcion,tasaconv,tasaconv_compra,codiso,simbolo)"
+            . " VALUES ('EUR','EUROS','1','1','978','€')"
+            . ",('ARS','PESOS (ARG)','16.684','16.684','32','AR$')"
+            . ",('CLP','PESOS (CLP)','704.0227','704.0227','152','CLP$')"
+            . ",('COP','PESOS (COP)','3140.6803','3140.6803','170','CO$')"
+            . ",('DOP','PESOS DOMINICANOS','49.7618','49.7618','214','RD$')"
+            . ",('GBP','LIBRAS ESTERLINAS','0.865','0.865','826','£')"
+            . ",('HTG','GOURDES','72.0869','72.0869','322','G')"
+            . ",('MXN','PESOS (MXN)','23.3678','23.3678','484','MX$')"
+            . ",('PAB','BALBOAS','1.128','1.128','590','B')"
+            . ",('PEN','SOLES','3.736','3.736','604','S/')"
+            . ",('PYG','GUARANÍ','6750','6750','4217','Gs')"
+            . ",('USD','DÓLARES EE.UU.','1.129','1.129','840','$')"
+            . ",('VEF','BOLÍVARES','10.6492','10.6492','937','Bs');";
     }
 
     public function url()
     {
-        if (is_null($this->coddivisa)) {
-            return "index.php?page=admin_divisas";
-        } else {
-            return "index.php?page=admin_divisas&cod=" . $this->coddivisa;
-        }
+        return "index.php?page=admin_divisas";
+    }
+
+    /**
+     * Devuelve TRUE si esta es la divisa predeterminada de la empresa
+     * @return boolean
+     */
+    public function is_default()
+    {
+        return ( $this->coddivisa == $this->default_items->coddivisa() );
     }
 
     public function get($cod)
@@ -99,17 +122,17 @@ class divisa extends \fs_model
                     ", codiso = " . $this->var2str($this->codiso) .
                     ", simbolo = " . $this->var2str($this->simbolo) .
                     ", tasaconv = " . $this->var2str($this->tasaconv) .
-                    ", tasaconvcompra = " . $this->var2str($this->tasaconvcompra) .
+                    ", tasaconv_compra = " . $this->var2str($this->tasaconv_compra) .
                     " WHERE coddivisa = " . $this->var2str($this->coddivisa) . ";";
                 return $this->db->exec($sql);
             } else {
-                $sql = "INSERT INTO " . $this->table_name . " (coddivisa,descripcion,codiso,simbolo,tasaconv,tasaconvcompra) VALUES (" .
+                $sql = "INSERT INTO " . $this->table_name . " (coddivisa,descripcion,codiso,simbolo,tasaconv,tasaconv_compra) VALUES (" .
                     $this->var2str($this->coddivisa) . "," .
                     $this->var2str($this->descripcion) . "," .
                     $this->var2str($this->codiso) . "," .
                     $this->var2str($this->simbolo) . "," .
                     $this->var2str($this->tasaconv) . "," .
-                    $this->var2str($this->tasaconvcompra) . ");";
+                    $this->var2str($this->tasaconv_compra) . ");";
                 return $this->db->exec($sql);
             }
         } else {
@@ -143,6 +166,6 @@ class divisa extends \fs_model
         $this->codiso = '';
         $this->simbolo = '';
         $this->tasaconv = 1;
-        $this->tasaconvcompra = 1;
+        $this->tasaconv_compra = 1;
     }
 }

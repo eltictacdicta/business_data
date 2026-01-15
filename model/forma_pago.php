@@ -26,18 +26,55 @@ namespace FacturaScripts\model;
  */
 class forma_pago extends \fs_model
 {
+    /**
+     * Clave primaria. Varchar (10).
+     * @var string 
+     */
     public $codpago;
     public $descripcion;
-    public $contado;
-    public $plazovencimiento;
+
+    /**
+     * Pagados -> marca las facturas generadas como pagadas.
+     * @var string 
+     */
+    public $genrecibos;
+
+    /**
+     * Código de la cuenta bancaria asociada.
+     * @var string 
+     */
+    public $codcuenta;
+
+    /**
+     * Para indicar si hay que mostrar la cuenta bancaria del cliente.
+     * @var boolean
+     */
     public $domiciliado;
-    public $recargo;
+
+    /**
+     * TRUE (por defecto) -> mostrar los datos en documentos de venta,
+     * incluida la cuenta bancaria asociada.
+     * @var boolean
+     */
+    public $imprimir;
+
+    /**
+     * Sirve para generar la fecha de vencimiento de las facturas.
+     * @var string
+     */
+    public $vencimiento;
 
     public function __construct($data = FALSE)
     {
         parent::__construct('formaspago');
         if ($data) {
-            $this->loadFromData($data);
+            $this->codpago = $data['codpago'];
+            $this->descripcion = $data['descripcion'];
+            $this->genrecibos = isset($data['genrecibos']) ? $data['genrecibos'] : 'Emitidos';
+            $this->codcuenta = isset($data['codcuenta']) ? $data['codcuenta'] : NULL;
+            $this->domiciliado = isset($data['domiciliado']) ? $this->str2bool($data['domiciliado']) : FALSE;
+            $this->imprimir = isset($data['imprimir']) ? $this->str2bool($data['imprimir']) : TRUE;
+            $this->vencimiento = isset($data['vencimiento']) ? $data['vencimiento'] : '+1day';
         } else {
             $this->clear();
         }
@@ -45,16 +82,29 @@ class forma_pago extends \fs_model
 
     protected function install()
     {
-        return '';
+        return "INSERT INTO " . $this->table_name . " (codpago,descripcion,genrecibos,codcuenta,domiciliado,vencimiento)"
+            . " VALUES ('CONT','Al contado','Pagados',NULL,FALSE,'+0day')"
+            . ",('TRANS','Transferencia bancaria','Emitidos',NULL,FALSE,'+1month')"
+            . ",('TARJETA','Tarjeta de crédito','Pagados',NULL,FALSE,'+0day')"
+            . ",('PAYPAL','PayPal','Pagados',NULL,FALSE,'+0day');";
     }
 
     public function url()
     {
         if (is_null($this->codpago)) {
-            return "index.php?page=admin_formas_pago";
+            return "index.php?page=contabilidad_formas_pago";
         } else {
-            return "index.php?page=admin_formas_pago&cod=" . $this->codpago;
+            return "index.php?page=contabilidad_formas_pago&cod=" . $this->codpago;
         }
+    }
+
+    /**
+     * Devuelve TRUE si esta es la forma de pago predeterminada de la empresa
+     * @return boolean
+     */
+    public function is_default()
+    {
+        return ( $this->codpago == $this->default_items->codpago() );
     }
 
     public function get($cod)
@@ -94,20 +144,22 @@ class forma_pago extends \fs_model
         if ($this->test()) {
             if ($this->exists()) {
                 $sql = "UPDATE " . $this->table_name . " SET descripcion = " . $this->var2str($this->descripcion) .
-                    ", contado = " . $this->var2str($this->contado) .
-                    ", plazovencimiento = " . $this->var2str($this->plazovencimiento) .
+                    ", genrecibos = " . $this->var2str($this->genrecibos) .
+                    ", codcuenta = " . $this->var2str($this->codcuenta) .
                     ", domiciliado = " . $this->var2str($this->domiciliado) .
-                    ", recargo = " . $this->var2str($this->recargo) .
+                    ", imprimir = " . $this->var2str($this->imprimir) .
+                    ", vencimiento = " . $this->var2str($this->vencimiento) .
                     " WHERE codpago = " . $this->var2str($this->codpago) . ";";
                 return $this->db->exec($sql);
             } else {
-                $sql = "INSERT INTO " . $this->table_name . " (codpago,descripcion,contado,plazovencimiento,domiciliado,recargo) VALUES (" .
+                $sql = "INSERT INTO " . $this->table_name . " (codpago,descripcion,genrecibos,codcuenta,domiciliado,imprimir,vencimiento) VALUES (" .
                     $this->var2str($this->codpago) . "," .
                     $this->var2str($this->descripcion) . "," .
-                    $this->var2str($this->contado) . "," .
-                    $this->var2str($this->plazovencimiento) . "," .
+                    $this->var2str($this->genrecibos) . "," .
+                    $this->var2str($this->codcuenta) . "," .
                     $this->var2str($this->domiciliado) . "," .
-                    $this->var2str($this->recargo) . ");";
+                    $this->var2str($this->imprimir) . "," .
+                    $this->var2str($this->vencimiento) . ");";
                 return $this->db->exec($sql);
             }
         } else {
@@ -138,9 +190,10 @@ class forma_pago extends \fs_model
     {
         $this->codpago = NULL;
         $this->descripcion = '';
-        $this->contado = TRUE;
-        $this->plazovencimiento = 0;
+        $this->genrecibos = 'Emitidos';
+        $this->codcuenta = '';
         $this->domiciliado = FALSE;
-        $this->recargo = 0;
+        $this->imprimir = TRUE;
+        $this->vencimiento = '+1day';
     }
 }
