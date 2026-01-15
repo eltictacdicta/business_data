@@ -77,7 +77,7 @@ class divisa extends \fs_model
      */
     public function is_default()
     {
-        return ( $this->coddivisa == $this->default_items->coddivisa() );
+        return ($this->coddivisa == $this->default_items->coddivisa());
     }
 
     public function get($cod)
@@ -85,7 +85,7 @@ class divisa extends \fs_model
         $sql = "SELECT * FROM " . $this->table_name . " WHERE coddivisa = " . $this->var2str($cod) . ";";
         $data = $this->db->select($sql);
         if ($data) {
-            return new \divisa($data[0]);
+            return new static($data[0]);
         } else {
             return FALSE;
         }
@@ -153,7 +153,7 @@ class divisa extends \fs_model
         $data = $this->db->select($sql);
         if ($data) {
             foreach ($data as $d) {
-                $divisalist[] = new \divisa($d);
+                $divisalist[] = new static($d);
             }
         }
         return $divisalist;

@@ -23,34 +23,6 @@ if (!class_exists('pais', false)) {
             parent::__construct($data);
         }
 
-        /**
-         * Override del método get para devolver instancia sin namespace
-         */
-        public function get($cod)
-        {
-            $sql = "SELECT * FROM " . $this->table_name . " WHERE codpais = " . $this->var2str($cod) . ";";
-            $data = $this->db->select($sql);
-            if ($data) {
-                return new pais($data[0]);
-            } else {
-                return FALSE;
-            }
-        }
 
-        /**
-         * Override del método all para devolver instancias sin namespace
-         */
-        public function all()
-        {
-            $paislist = array();
-            $sql = "SELECT * FROM " . $this->table_name . " ORDER BY nombre ASC;";
-            $data = $this->db->select($sql);
-            if ($data) {
-                foreach ($data as $p) {
-                    $paislist[] = new pais($p);
-                }
-            }
-            return $paislist;
-        }
     }
-} 
+}

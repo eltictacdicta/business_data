@@ -23,34 +23,6 @@ if (!class_exists('divisa', false)) {
             parent::__construct($data);
         }
 
-        /**
-         * Override del método get para devolver instancia sin namespace
-         */
-        public function get($cod)
-        {
-            $sql = "SELECT * FROM " . $this->table_name . " WHERE coddivisa = " . $this->var2str($cod) . ";";
-            $data = $this->db->select($sql);
-            if ($data) {
-                return new divisa($data[0]);
-            } else {
-                return FALSE;
-            }
-        }
 
-        /**
-         * Override del método all para devolver instancias sin namespace
-         */
-        public function all()
-        {
-            $divisalist = array();
-            $sql = "SELECT * FROM " . $this->table_name . " ORDER BY descripcion ASC;";
-            $data = $this->db->select($sql);
-            if ($data) {
-                foreach ($data as $d) {
-                    $divisalist[] = new divisa($d);
-                }
-            }
-            return $divisalist;
-        }
     }
-} 
+}
