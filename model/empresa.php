@@ -57,7 +57,7 @@ class empresa extends \fs_model
     public $pie_factura;
     public $recequivalencia;
     public $stockpedidos;
-    
+
     /**
      * Configuración de email
      * @var array
@@ -99,7 +99,7 @@ class empresa extends \fs_model
             $this->pie_factura = isset($data['pie_factura']) ? $data['pie_factura'] : '';
             $this->recequivalencia = isset($data['recequivalencia']) ? $this->str2bool($data['recequivalencia']) : FALSE;
             $this->stockpedidos = isset($data['stockpedidos']) ? $this->str2bool($data['stockpedidos']) : FALSE;
-            
+
             // Inicializar configuración de email
             $this->email_config = array(
                 'mail_mailer' => 'smtp',
@@ -263,11 +263,11 @@ class empresa extends \fs_model
 
     /**
      * Crea una nueva instancia de PHPMailer configurada
-     * @return PHPMailer
+     * @return \PHPMailer
      */
     public function new_mail()
     {
-        $mail = new PHPMailer();
+        $mail = new \PHPMailer();
         $mail->CharSet = 'UTF-8';
         $mail->WordWrap = 50;
         $mail->Mailer = isset($this->email_config['mail_mailer']) ? $this->email_config['mail_mailer'] : 'smtp';
@@ -298,7 +298,7 @@ class empresa extends \fs_model
 
     /**
      * Conecta con el servidor de email
-     * @param PHPMailer $mail
+     * @param \PHPMailer $mail
      * @return boolean
      */
     public function mail_connect($mail)
@@ -306,7 +306,7 @@ class empresa extends \fs_model
         try {
             $mail->SMTPConnect();
             return true;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return false;
         }
     }
@@ -352,7 +352,7 @@ class empresa extends \fs_model
         $this->pie_factura = '';
         $this->recequivalencia = FALSE;
         $this->stockpedidos = FALSE;
-        
+
         // Inicializar configuración de email
         $this->email_config = array(
             'mail_mailer' => 'smtp',
