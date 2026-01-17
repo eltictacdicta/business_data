@@ -73,6 +73,14 @@ class admin_empresa extends fs_controller
 
     public function __construct()
     {
+        /// Check for undefined constants to prevent crashes in standalone/testing contexts
+        if (!defined('FS_MYDOCS')) {
+            define('FS_MYDOCS', '');
+        }
+        if (!defined('FS_TMP_NAME')) {
+            define('FS_TMP_NAME', '');
+        }
+
         parent::__construct(__CLASS__, 'Empresa / web', 'admin', TRUE, TRUE);
 
         // Inicializar empresa antes que cualquier otra cosa
