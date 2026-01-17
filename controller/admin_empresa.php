@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-require_once 'extras/phpmailer/class.phpmailer.php';
-require_once 'extras/phpmailer/class.smtp.php';
 require_once 'base/fs_divisa_tools.php';
 require_once 'base/fs_default_items.php';
 
