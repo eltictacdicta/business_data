@@ -1,16 +1,19 @@
 
 bootbox.setLocale("es");
 
+var empresa_coddivisa = '{$fsc->empresa->coddivisa}';
+var empresa_simbolo = '{$fsc->simbolo_divisa()}';
+
 function show_precio(precio, coddivisa)
 {
-    coddivisa || ( coddivisa = '{$fsc->empresa->coddivisa}' );
+    coddivisa || ( coddivisa = empresa_coddivisa );
     
-    if(coddivisa == '{$fsc->empresa->coddivisa}')
+    if(coddivisa == empresa_coddivisa)
     {
-    {if="FS_POS_DIVISA=='right'"}
-    return number_format(precio, {#FS_NF0#}, '{#FS_NF1#}', '{#FS_NF2#}')+' {$fsc->simbolo_divisa()}';
+    {if="'{#FS_POS_DIVISA#}'=='right'"}
+    return number_format(precio, {#FS_NF0#}, '{#FS_NF1#}', '{#FS_NF2#}') + empresa_simbolo;
     {else}
-    return '{$fsc->simbolo_divisa()}'+number_format(precio, {#FS_NF0#}, '{#FS_NF1#}', '{#FS_NF2#}');
+    return empresa_simbolo + number_format(precio, {#FS_NF0#}, '{#FS_NF1#}', '{#FS_NF2#}');
     {/if}
     }
     else
