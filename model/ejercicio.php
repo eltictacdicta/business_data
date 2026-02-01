@@ -17,14 +17,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-namespace FacturaScripts\model;
-
 /**
  * Ejercicio contable. Es el periodo en el que se agrupan asientos, facturas, albaranes...
+ * Clase sin namespace para compatibilidad con facturacion_base.
  *
  * @author Carlos García Gómez <neorazorx@gmail.com>
  */
-class ejercicio extends \fs_model
+class ejercicio extends fs_model
 {
 
     /**
@@ -209,7 +208,7 @@ class ejercicio extends \fs_model
     {
         $data = $this->db->select("SELECT * FROM " . $this->table_name . " WHERE codejercicio = " . $this->var2str($cod) . ";");
         if ($data) {
-            return new \ejercicio($data[0]);
+            return new ejercicio($data[0]);
         }
 
         return FALSE;
@@ -230,14 +229,14 @@ class ejercicio extends \fs_model
 
         $data = $this->db->select($sql);
         if ($data) {
-            $eje = new \ejercicio($data[0]);
+            $eje = new ejercicio($data[0]);
             if ($eje->abierto() || !$solo_abierto) {
                 return $eje;
             }
 
             return FALSE;
         } else if ($crear) {
-            $eje = new \ejercicio();
+            $eje = new ejercicio();
             $eje->codejercicio = $eje->get_new_codigo(Date('Y', strtotime($fecha)));
             $eje->nombre = Date('Y', strtotime($fecha));
             $eje->fechainicio = Date('1-1-Y', strtotime($fecha));
@@ -418,7 +417,7 @@ class ejercicio extends \fs_model
             $data = $this->db->select("SELECT * FROM " . $this->table_name . " ORDER BY fechainicio DESC;");
             if ($data) {
                 foreach ($data as $e) {
-                    $listae[] = new \ejercicio($e);
+                    $listae[] = new ejercicio($e);
                 }
             }
 
@@ -443,7 +442,7 @@ class ejercicio extends \fs_model
             $data = $this->db->select($sql);
             if ($data) {
                 foreach ($data as $e) {
-                    $listae[] = new \ejercicio($e);
+                    $listae[] = new ejercicio($e);
                 }
             }
 

@@ -17,14 +17,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-namespace FacturaScripts\model;
-
 /**
  * Un país, por ejemplo España.
+ * Clase sin namespace para compatibilidad con facturacion_base.
  *
  * @author Carlos García Gómez <neorazorx@gmail.com>
  */
-class pais extends \fs_model
+class pais extends fs_model
 {
     public $codpais;
     public $nombre;

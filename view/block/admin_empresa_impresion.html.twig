@@ -4,77 +4,77 @@
 <div class="panel-body">
     <div class="form-group">
         <label class="checkbox-inline">
-            {if="$fsc->impresion['print_ref']"}
+            {% if fsc.impresion['print_ref']|default(false) %}
             <input type="checkbox" name="print_ref" value="TRUE" checked=""/>
-            {else}
+            {% else %}
             <input type="checkbox" name="print_ref" value="TRUE"/>
-            {/if}
+            {% endif %}
             mostrar referencias.
         </label>
         &nbsp;
         <label class="checkbox-inline">
-            {if="$fsc->impresion['print_dto']"}
+            {% if fsc.impresion['print_dto']|default(false) %}
             <input type="checkbox" name="print_dto" value="TRUE" checked=""/>
-            {else}
+            {% else %}
             <input type="checkbox" name="print_dto" value="TRUE"/>
-            {/if}
+            {% endif %}
             mostrar descuentos.
         </label>
         &nbsp;
         <label class="checkbox-inline">
-            {if="$fsc->impresion['print_alb']"}
+            {% if fsc.impresion['print_alb']|default(false) %}
             <input type="checkbox" name="print_alb" value="TRUE" checked=""/>
-            {else}
+            {% else %}
             <input type="checkbox" name="print_alb" value="TRUE"/>
-            {/if}
-            mostrar {#FS_ALBARANES#} relacionados.
+            {% endif %}
+            mostrar {{ fs_albaranes|default('albaranes') }} relacionados.
         </label>
         &nbsp;
         <label class="checkbox-inline">
-            {if="$fsc->impresion['print_formapago']"}
+            {% if fsc.impresion['print_formapago']|default(false) %}
             <input type="checkbox" name="print_formapago" value="TRUE" checked=""/>
-            {else}
+            {% else %}
             <input type="checkbox" name="print_formapago" value="TRUE"/>
-            {/if}
+            {% endif %}
             mostrar forma de pago en las facturas.
         </label>
     </div>
     <div class="form-group">
         Pie de página de la factura:
-        <textarea name="pie_factura" rows="3" class="form-control">{$fsc->empresa->pie_factura}</textarea>
+        <textarea name="pie_factura" rows="3" class="form-control">{{ fsc.empresa.pie_factura }}</textarea>
     </div>
     <div class="row">
         <div class="col-sm-4">
-            {if="$fsc->logo"}
+            {% if fsc.logo %}
             <div class="thumbnail">
-                <img src="{$fsc->logo}" alt="logotipo"/>
+                <img src="{{ fsc.logo }}" alt="logotipo"/>
             </div>
-            <button class="btn btn-sm btn-block btn-default" id="b_add_logo">
+            <button class="btn btn-sm btn-block btn-default" id="b_add_logo" type="button">
                 <span class="glyphicon glyphicon-picture"></span>
                 Cambiar logotipo
             </button>
-            {else}
-            <button class="btn btn-sm btn-default" id="b_add_logo_new">
+            {% else %}
+            <button class="btn btn-sm btn-default" id="b_add_logo_new" type="button">
                 <span class="glyphicon glyphicon-picture"></span>
                 Añadir logotipo
             </button>
-            {/if}
+            {% endif %}
         </div>
         <div class="col-sm-8">
             <div class="form-group">
                 Lema:
-                <input class="form-control" type="text" name="lema" value="{$fsc->empresa->lema}" autocomplete="off"/>
+                <input class="form-control" type="text" name="lema" value="{{ fsc.empresa.lema }}" autocomplete="off"/>
                 <p class="help-block">Lema y horario se utilizan solamente en los tickets.</p>
             </div>
             <div class="form-group">
                 Horario:
-                <input class="form-control" type="text" name="horario" value="{$fsc->empresa->horario}" autocomplete="off"/>
+                <input class="form-control" type="text" name="horario" value="{{ fsc.empresa.horario }}" autocomplete="off"/>
             </div>
         </div>
     </div>
 </div>
 <div class="panel-footer" style="text-align: right;">
-    <button class="btn btn-sm btn-primary" type="submit" onclick="this.disabled = true; this.form.action = '{$fsc->url()}#impresion'; this.form.submit();">
+    <button class="btn btn-sm btn-primary" type="submit" onclick="this.disabled = true; this.form.action = '{{ fsc.url() }}#impresion'; this.form.submit();">
         <span class="glyphicon glyphicon-floppy-disk"></span>&nbsp; Guardar
     </button>
 </div>

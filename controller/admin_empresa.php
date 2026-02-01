@@ -17,18 +17,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-require_once 'base/fs_divisa_tools.php';
+// fs_divisa_tools is now part of business_data plugin
+require_once dirname(__FILE__) . '/../extras/fs_divisa_tools.php';
 require_once 'base/fs_default_items.php';
-
-// Cargar clases de compatibilidad
-require_once dirname(__FILE__) . '/../model/empresa_compat.php';
-require_once dirname(__FILE__) . '/../model/almacen_compat.php';
-require_once dirname(__FILE__) . '/../model/cuenta_banco_compat.php';
-require_once dirname(__FILE__) . '/../model/divisa_compat.php';
-require_once dirname(__FILE__) . '/../model/ejercicio_compat.php';
-require_once dirname(__FILE__) . '/../model/forma_pago_compat.php';
-require_once dirname(__FILE__) . '/../model/serie_compat.php';
-require_once dirname(__FILE__) . '/../model/pais_compat.php';
 
 /**
  * Controlador de admin -> empresa.
@@ -70,6 +61,12 @@ class admin_empresa extends fs_controller
      * @var string
      */
     public $logo = '';
+
+    /**
+     * Traducciones de documentos (FACTURA, ALBARAN, etc.)
+     * @var array
+     */
+    public $traducciones = array();
 
     public function __construct()
     {
@@ -190,6 +187,28 @@ class admin_empresa extends fs_controller
         );
         $this->email_plantillas = $fsvar->array_get($this->email_plantillas, FALSE);
 
+        /// obtenemos las traducciones de documentos
+        $this->traducciones = array(
+            'FACTURA' => defined('FS_FACTURA') ? FS_FACTURA : 'factura',
+            'FACTURAS' => defined('FS_FACTURAS') ? FS_FACTURAS : 'facturas',
+            'FACTURA_SIMPLIFICADA' => defined('FS_FACTURA_SIMPLIFICADA') ? FS_FACTURA_SIMPLIFICADA : 'factura simplificada',
+            'FACTURA_RECTIFICATIVA' => defined('FS_FACTURA_RECTIFICATIVA') ? FS_FACTURA_RECTIFICATIVA : 'factura rectificativa',
+            'ALBARAN' => defined('FS_ALBARAN') ? FS_ALBARAN : 'albarán',
+            'ALBARANES' => defined('FS_ALBARANES') ? FS_ALBARANES : 'albaranes',
+            'PEDIDO' => defined('FS_PEDIDO') ? FS_PEDIDO : 'pedido',
+            'PEDIDOS' => defined('FS_PEDIDOS') ? FS_PEDIDOS : 'pedidos',
+            'PRESUPUESTO' => defined('FS_PRESUPUESTO') ? FS_PRESUPUESTO : 'presupuesto',
+            'PRESUPUESTOS' => defined('FS_PRESUPUESTOS') ? FS_PRESUPUESTOS : 'presupuestos',
+            'PROVINCIA' => defined('FS_PROVINCIA') ? FS_PROVINCIA : 'provincia',
+            'APARTADO' => defined('FS_APARTADO') ? FS_APARTADO : 'apartado',
+            'CIFNIF' => defined('FS_CIFNIF') ? FS_CIFNIF : 'CIF/NIF',
+            'IVA' => defined('FS_IVA') ? FS_IVA : 'IVA',
+            'IRPF' => defined('FS_IRPF') ? FS_IRPF : 'IRPF',
+            'NUMERO2' => defined('FS_NUMERO2') ? FS_NUMERO2 : 'número 2',
+            'SERIE' => defined('FS_SERIE') ? FS_SERIE : 'serie',
+            'SERIES' => defined('FS_SERIES') ? FS_SERIES : 'series',
+        );
+
         /// Inicializamos las herramientas de divisa con la divisa de la empresa
         $coddivisa = ($this->empresa && $this->empresa->coddivisa) ? $this->empresa->coddivisa : 'EUR';
         $this->divisa_tools = new fs_divisa_tools($coddivisa);
@@ -268,6 +287,9 @@ class admin_empresa extends fs_controller
                 $this->email_plantillas['mail_presupuesto'] = filter_input(INPUT_POST, 'mail_presupuesto');
             }
             $fsvar->array_save($this->email_plantillas);
+
+            /// guardamos las traducciones de documentos
+            $this->save_traducciones();
         } else if (filter_input(INPUT_POST, 'logo')) {
             $this->cambiar_logo();
         } else if (filter_input(INPUT_GET, 'delete_logo')) {
@@ -584,6 +606,38 @@ class admin_empresa extends fs_controller
 
         header('Content-Type: application/json');
         echo json_encode(array('query' => $aux, 'suggestions' => $json));
+    }
+
+    /**
+     * Guarda las traducciones de documentos en config2.php
+     */
+    private function save_traducciones()
+    {
+        $traducciones_keys = [
+            'FACTURA', 'FACTURAS', 'FACTURA_SIMPLIFICADA', 'FACTURA_RECTIFICATIVA',
+            'ALBARAN', 'ALBARANES', 'PEDIDO', 'PEDIDOS', 'PRESUPUESTO', 'PRESUPUESTOS',
+            'PROVINCIA', 'APARTADO', 'CIFNIF', 'IVA', 'IRPF', 'NUMERO2', 'SERIE', 'SERIES'
+        ];
+
+        $changed = false;
+        foreach ($traducciones_keys as $key) {
+            $value = filter_input(INPUT_POST, $key);
+            if ($value !== null && $value !== '') {
+                $this->traducciones[$key] = $value;
+                $changed = true;
+            }
+        }
+
+        if ($changed) {
+            // Guardar en config2.php usando fs_settings
+            if (class_exists('fs_settings')) {
+                $settings = new fs_settings();
+                foreach ($this->traducciones as $key => $value) {
+                    $settings->set($key, $value);
+                }
+                $settings->save();
+            }
+        }
     }
 }
 

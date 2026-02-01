@@ -18,7 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'base/fs_divisa_tools.php';
+// fs_divisa_tools is now part of business_data plugin
+require_once FS_FOLDER . '/plugins/business_data/extras/fs_divisa_tools.php';
 
 /**
  * Controlador extendido para plugins que necesitan acceso a datos de empresa.

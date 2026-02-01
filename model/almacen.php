@@ -18,14 +18,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace FacturaScripts\model;
-
 /**
  * El almacén donde están físicamente los artículos.
+ * Clase sin namespace para compatibilidad con facturacion_base.
  *
  * @author Carlos García Gómez <neorazorx@gmail.com>
  */
-class almacen extends \fs_model
+class almacen extends fs_model
 {
     /**
      * Clave primaria. Varchar (4).
@@ -171,7 +170,7 @@ class almacen extends \fs_model
         $sql = "SELECT * FROM " . $this->table_name . " WHERE codalmacen = " . $this->var2str($cod) . ";";
         $data = $this->db->select($sql);
         if ($data) {
-            return new \almacen($data[0]);
+            return new almacen($data[0]);
         } else {
             return FALSE;
         }
@@ -270,7 +269,7 @@ class almacen extends \fs_model
         $data = $this->db->select($sql);
         if ($data) {
             foreach ($data as $a) {
-                $almacenlist[] = new \almacen($a);
+                $almacenlist[] = new almacen($a);
             }
         }
         return $almacenlist;

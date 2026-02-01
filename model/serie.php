@@ -17,15 +17,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-namespace FacturaScripts\model;
-
 /**
  * Una serie de facturación o contabilidad, para agrupar documentos de compra y/o venta
  * y para tener distinta numeración en cada serie.
+ * Clase sin namespace para compatibilidad con facturacion_base.
  *
  * @author Carlos García Gómez <neorazorx@gmail.com>
  */
-class serie extends \fs_model
+class serie extends fs_model
 {
     /**
      * Clave primaria. Varchar (2).
@@ -116,7 +115,7 @@ class serie extends \fs_model
         $sql = "SELECT * FROM " . $this->table_name . " WHERE codserie = " . $this->var2str($cod) . ";";
         $data = $this->db->select($sql);
         if ($data) {
-            return new \serie($data[0]);
+            return new serie($data[0]);
         } else {
             return FALSE;
         }
@@ -195,7 +194,7 @@ class serie extends \fs_model
         $data = $this->db->select($sql);
         if ($data) {
             foreach ($data as $s) {
-                $serielist[] = new \serie($s);
+                $serielist[] = new serie($s);
             }
         }
         return $serielist;

@@ -1,0 +1,130 @@
+<div class="panel-heading">
+    <h3 class="panel-title">
+        <i class="fa fa-language"></i>&nbsp; Traducciones de documentos
+    </h3>
+</div>
+<div class="panel-body">
+    <p class="help-block">
+        Personaliza los nombres de los documentos comerciales. FACTURA y FACTURAS se traducen únicamente en los documentos de ventas.
+        FACTURA_SIMPLIFICADA se utiliza en los tickets.
+    </p>
+    <div class="row">
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">FACTURA:</span>
+                <input class="form-control" type="text" name="FACTURA" value="{{ fsc.traducciones['FACTURA']|default('factura') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">FACTURAS:</span>
+                <input class="form-control" type="text" name="FACTURAS" value="{{ fsc.traducciones['FACTURAS']|default('facturas') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">FACTURA_SIMPLIFICADA:</span>
+                <input class="form-control" type="text" name="FACTURA_SIMPLIFICADA" value="{{ fsc.traducciones['FACTURA_SIMPLIFICADA']|default('factura simplificada') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">FACTURA_RECTIFICATIVA:</span>
+                <input class="form-control" type="text" name="FACTURA_RECTIFICATIVA" value="{{ fsc.traducciones['FACTURA_RECTIFICATIVA']|default('factura rectificativa') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">ALBARAN:</span>
+                <input class="form-control" type="text" name="ALBARAN" value="{{ fsc.traducciones['ALBARAN']|default('albarán') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">ALBARANES:</span>
+                <input class="form-control" type="text" name="ALBARANES" value="{{ fsc.traducciones['ALBARANES']|default('albaranes') }}" autocomplete="off"/>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">PEDIDO:</span>
+                <input class="form-control" type="text" name="PEDIDO" value="{{ fsc.traducciones['PEDIDO']|default('pedido') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">PEDIDOS:</span>
+                <input class="form-control" type="text" name="PEDIDOS" value="{{ fsc.traducciones['PEDIDOS']|default('pedidos') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">PRESUPUESTO:</span>
+                <input class="form-control" type="text" name="PRESUPUESTO" value="{{ fsc.traducciones['PRESUPUESTO']|default('presupuesto') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">PRESUPUESTOS:</span>
+                <input class="form-control" type="text" name="PRESUPUESTOS" value="{{ fsc.traducciones['PRESUPUESTOS']|default('presupuestos') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">PROVINCIA:</span>
+                <input class="form-control" type="text" name="PROVINCIA" value="{{ fsc.traducciones['PROVINCIA']|default('provincia') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">APARTADO:</span>
+                <input class="form-control" type="text" name="APARTADO" value="{{ fsc.traducciones['APARTADO']|default('apartado') }}" autocomplete="off"/>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">CIFNIF:</span>
+                <input class="form-control" type="text" name="CIFNIF" value="{{ fsc.traducciones['CIFNIF']|default('CIF/NIF') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">IVA:</span>
+                <input class="form-control" type="text" name="IVA" value="{{ fsc.traducciones['IVA']|default('IVA') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">IRPF:</span>
+                <input class="form-control" type="text" name="IRPF" value="{{ fsc.traducciones['IRPF']|default('IRPF') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">NUMERO2:</span>
+                <input class="form-control" type="text" name="NUMERO2" value="{{ fsc.traducciones['NUMERO2']|default('número 2') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">SERIE:</span>
+                <input class="form-control" type="text" name="SERIE" value="{{ fsc.traducciones['SERIE']|default('serie') }}" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-3">
+            <div class="form-group">
+                <span class="text-uppercase">SERIES:</span>
+                <input class="form-control" type="text" name="SERIES" value="{{ fsc.traducciones['SERIES']|default('series') }}" autocomplete="off"/>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="panel-footer" style="text-align: right;">
+    <button class="btn btn-sm btn-primary" type="submit" onclick="this.disabled = true; this.form.action = '{{ fsc.url() }}#traducciones'; this.form.submit();">
+        <span class="glyphicon glyphicon-floppy-disk"></span>&nbsp; Guardar
+    </button>
+</div>

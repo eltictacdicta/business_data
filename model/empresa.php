@@ -17,14 +17,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-namespace FacturaScripts\model;
-
 /**
  * Esta clase almacena los principales datos de la empresa.
+ * Clase sin namespace para compatibilidad con facturacion_base.
  *
  * @author Carlos García Gómez <neorazorx@gmail.com>
  */
-class empresa extends \fs_model
+class empresa extends fs_model
 {
     public $id;
     public $xid;
@@ -132,10 +131,193 @@ class empresa extends \fs_model
         $sql = "SELECT * FROM " . $this->table_name . " ORDER BY id ASC;";
         $data = $this->db->select($sql);
         if ($data) {
-            return new \empresa($data[0]);
+            $emp = new empresa($data[0]);
+            
+            // Asegurar que los campos de configuración tengan valores válidos
+            $emp->ensure_defaults();
+            
+            return $emp;
         } else {
             return FALSE;
         }
+    }
+    
+    /**
+     * Asegura que los campos de configuración tengan valores por defecto válidos.
+     * Esto es necesario para compatibilidad con facturacion_base.
+     */
+    public function ensure_defaults()
+    {
+        // Asegurar codalmacen
+        if (empty($this->codalmacen)) {
+            $this->codalmacen = $this->get_default_codalmacen();
+        }
+        
+        // Asegurar coddivisa
+        if (empty($this->coddivisa)) {
+            $this->coddivisa = $this->get_default_coddivisa();
+        }
+        
+        // Asegurar codpago
+        if (empty($this->codpago)) {
+            $this->codpago = $this->get_default_codpago();
+        }
+        
+        // Asegurar codserie
+        if (empty($this->codserie)) {
+            $this->codserie = $this->get_default_codserie();
+        }
+        
+        // Asegurar codejercicio
+        if (empty($this->codejercicio)) {
+            $this->codejercicio = $this->get_default_codejercicio();
+        }
+    }
+    
+    /**
+     * Obtiene el código del almacén por defecto.
+     * Busca primero en fs_default_items, luego el primer almacén disponible.
+     * @return string|null
+     */
+    public function get_default_codalmacen()
+    {
+        // Intentar obtener el almacén por defecto de fs_default_items
+        if (class_exists('fs_default_items')) {
+            $default_items = new fs_default_items();
+            $cod = $default_items->codalmacen();
+            if (!empty($cod)) {
+                return $cod;
+            }
+        }
+        
+        // Si no hay default, buscar el primer almacén disponible
+        $sql = "SELECT codalmacen FROM almacenes ORDER BY codalmacen ASC LIMIT 1;";
+        $data = $this->db->select($sql);
+        if ($data) {
+            return $data[0]['codalmacen'];
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Obtiene el código de divisa por defecto.
+     * @return string
+     */
+    public function get_default_coddivisa()
+    {
+        // Intentar obtener la divisa por defecto de fs_default_items
+        if (class_exists('fs_default_items')) {
+            $default_items = new fs_default_items();
+            $cod = $default_items->coddivisa();
+            if (!empty($cod)) {
+                return $cod;
+            }
+        }
+        
+        // Si no hay default, buscar EUR o la primera divisa disponible
+        $sql = "SELECT coddivisa FROM divisas WHERE coddivisa = 'EUR' LIMIT 1;";
+        $data = $this->db->select($sql);
+        if ($data) {
+            return $data[0]['coddivisa'];
+        }
+        
+        $sql = "SELECT coddivisa FROM divisas ORDER BY coddivisa ASC LIMIT 1;";
+        $data = $this->db->select($sql);
+        if ($data) {
+            return $data[0]['coddivisa'];
+        }
+        
+        return 'EUR';
+    }
+    
+    /**
+     * Obtiene el código de forma de pago por defecto.
+     * @return string|null
+     */
+    public function get_default_codpago()
+    {
+        // Intentar obtener la forma de pago por defecto de fs_default_items
+        if (class_exists('fs_default_items')) {
+            $default_items = new fs_default_items();
+            $cod = $default_items->codpago();
+            if (!empty($cod)) {
+                return $cod;
+            }
+        }
+        
+        // Si no hay default, buscar la primera forma de pago disponible
+        $sql = "SELECT codpago FROM formaspago ORDER BY codpago ASC LIMIT 1;";
+        $data = $this->db->select($sql);
+        if ($data) {
+            return $data[0]['codpago'];
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Obtiene el código de serie por defecto.
+     * @return string|null
+     */
+    public function get_default_codserie()
+    {
+        // Intentar obtener la serie por defecto de fs_default_items
+        if (class_exists('fs_default_items')) {
+            $default_items = new fs_default_items();
+            $cod = $default_items->codserie();
+            if (!empty($cod)) {
+                return $cod;
+            }
+        }
+        
+        // Si no hay default, buscar la serie 'A' o la primera disponible
+        $sql = "SELECT codserie FROM series WHERE codserie = 'A' LIMIT 1;";
+        $data = $this->db->select($sql);
+        if ($data) {
+            return $data[0]['codserie'];
+        }
+        
+        $sql = "SELECT codserie FROM series ORDER BY codserie ASC LIMIT 1;";
+        $data = $this->db->select($sql);
+        if ($data) {
+            return $data[0]['codserie'];
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Obtiene el código de ejercicio por defecto (el actual).
+     * @return string|null
+     */
+    public function get_default_codejercicio()
+    {
+        // Intentar obtener el ejercicio por defecto de fs_default_items
+        if (class_exists('fs_default_items')) {
+            $default_items = new fs_default_items();
+            $cod = $default_items->codejercicio();
+            if (!empty($cod)) {
+                return $cod;
+            }
+        }
+        
+        // Si no hay default, buscar el ejercicio del año actual
+        $year = date('Y');
+        $sql = "SELECT codejercicio FROM ejercicios WHERE nombre LIKE '%" . $year . "%' OR codejercicio = '" . $year . "' LIMIT 1;";
+        $data = $this->db->select($sql);
+        if ($data) {
+            return $data[0]['codejercicio'];
+        }
+        
+        // Si no hay del año actual, buscar el último ejercicio abierto
+        $sql = "SELECT codejercicio FROM ejercicios WHERE estado = 'ABIERTO' ORDER BY fechainicio DESC LIMIT 1;";
+        $data = $this->db->select($sql);
+        if ($data) {
+            return $data[0]['codejercicio'];
+        }
+        
+        return null;
     }
 
     public function exists()

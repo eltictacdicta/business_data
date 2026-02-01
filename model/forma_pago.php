@@ -17,14 +17,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-namespace FacturaScripts\model;
-
 /**
  * Forma de pago de una factura.
+ * Clase sin namespace para compatibilidad con facturacion_base.
  *
  * @author Carlos García Gómez <neorazorx@gmail.com>
  */
-class forma_pago extends \fs_model
+class forma_pago extends fs_model
 {
     /**
      * Clave primaria. Varchar (10).
@@ -112,7 +111,7 @@ class forma_pago extends \fs_model
         $sql = "SELECT * FROM " . $this->table_name . " WHERE codpago = " . $this->var2str($cod) . ";";
         $data = $this->db->select($sql);
         if ($data) {
-            return new \forma_pago($data[0]);
+            return new forma_pago($data[0]);
         } else {
             return FALSE;
         }
@@ -180,7 +179,7 @@ class forma_pago extends \fs_model
         $data = $this->db->select($sql);
         if ($data) {
             foreach ($data as $f) {
-                $formalist[] = new \forma_pago($f);
+                $formalist[] = new forma_pago($f);
             }
         }
         return $formalist;

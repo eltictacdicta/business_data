@@ -17,14 +17,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-namespace FacturaScripts\model;
-
 /**
  * Una cuenta bancaria de la propia empresa.
+ * Clase sin namespace para compatibilidad con facturacion_base.
  *
  * @author Carlos García Gómez <neorazorx@gmail.com>
  */
-class cuenta_banco extends \fs_model
+class cuenta_banco extends fs_model
 {
     public $codcuenta;
     public $descripcion;
@@ -64,7 +63,7 @@ class cuenta_banco extends \fs_model
         $sql = "SELECT * FROM " . $this->table_name . " WHERE codcuenta = " . $this->var2str($cod) . ";";
         $data = $this->db->select($sql);
         if ($data) {
-            return new \cuenta_banco($data[0]);
+            return new cuenta_banco($data[0]);
         } else {
             return FALSE;
         }
@@ -136,7 +135,7 @@ class cuenta_banco extends \fs_model
         $data = $this->db->select($sql);
         if ($data) {
             foreach ($data as $c) {
-                $cuentalist[] = new \cuenta_banco($c);
+                $cuentalist[] = new cuenta_banco($c);
             }
         }
         return $cuentalist;
