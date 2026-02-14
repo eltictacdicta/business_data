@@ -25,6 +25,9 @@
  */
 class forma_pago extends fs_model
 {
+    private const SQL_SELECT_ALL_FROM = 'SELECT * FROM ';
+    private const SQL_WHERE = ' WHERE ';
+
     /**
      * Clave primaria. Varchar (10).
      * @var string 
@@ -108,7 +111,7 @@ class forma_pago extends fs_model
 
     public function get($cod)
     {
-        $sql = "SELECT * FROM " . $this->table_name . " WHERE codpago = " . $this->var2str($cod) . ";";
+        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codpago = " . $this->var2str($cod) . ";";
         $data = $this->db->select($sql);
         if ($data) {
             return new forma_pago($data[0]);
@@ -122,7 +125,7 @@ class forma_pago extends fs_model
         if (is_null($this->codpago)) {
             return FALSE;
         } else {
-            return $this->db->select("SELECT * FROM " . $this->table_name . " WHERE codpago = " . $this->var2str($this->codpago) . ";");
+            return $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codpago = " . $this->var2str($this->codpago) . ";");
         }
     }
 
@@ -175,7 +178,7 @@ class forma_pago extends fs_model
     public function all()
     {
         $formalist = array();
-        $sql = "SELECT * FROM " . $this->table_name . " ORDER BY descripcion ASC;";
+        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . " ORDER BY descripcion ASC;";
         $data = $this->db->select($sql);
         if ($data) {
             foreach ($data as $f) {

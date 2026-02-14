@@ -25,6 +25,9 @@
  */
 class empresa extends fs_model
 {
+    private const SQL_SELECT_ALL_FROM = 'SELECT * FROM ';
+    private const SQL_WHERE = ' WHERE ';
+
     public $id;
     public $xid;
     public $cifnif;
@@ -128,7 +131,7 @@ class empresa extends fs_model
 
     public function get($id = NULL)
     {
-        $sql = "SELECT * FROM " . $this->table_name . " ORDER BY id ASC;";
+        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . " ORDER BY id ASC;";
         $data = $this->db->select($sql);
         if ($data) {
             $emp = new empresa($data[0]);
@@ -325,7 +328,7 @@ class empresa extends fs_model
         if (is_null($this->id)) {
             return FALSE;
         } else {
-            return $this->db->select("SELECT * FROM " . $this->table_name . " WHERE id = " . $this->var2str($this->id) . ";");
+            return $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "id = " . $this->var2str($this->id) . ";");
         }
     }
 

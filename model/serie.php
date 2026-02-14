@@ -26,6 +26,9 @@
  */
 class serie extends fs_model
 {
+    private const SQL_SELECT_ALL_FROM = 'SELECT * FROM ';
+    private const SQL_WHERE = ' WHERE ';
+
     /**
      * Clave primaria. Varchar (2).
      * @var string 
@@ -112,7 +115,7 @@ class serie extends fs_model
 
     public function get($cod)
     {
-        $sql = "SELECT * FROM " . $this->table_name . " WHERE codserie = " . $this->var2str($cod) . ";";
+        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codserie = " . $this->var2str($cod) . ";";
         $data = $this->db->select($sql);
         if ($data) {
             return new serie($data[0]);
@@ -126,7 +129,7 @@ class serie extends fs_model
         if (is_null($this->codserie)) {
             return FALSE;
         } else {
-            return $this->db->select("SELECT * FROM " . $this->table_name . " WHERE codserie = " . $this->var2str($this->codserie) . ";");
+            return $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codserie = " . $this->var2str($this->codserie) . ";");
         }
     }
 
@@ -190,7 +193,7 @@ class serie extends fs_model
     public function all()
     {
         $serielist = array();
-        $sql = "SELECT * FROM " . $this->table_name . " ORDER BY codserie ASC;";
+        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . " ORDER BY codserie ASC;";
         $data = $this->db->select($sql);
         if ($data) {
             foreach ($data as $s) {

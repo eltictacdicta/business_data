@@ -25,6 +25,8 @@
  */
 class ejercicio extends fs_model
 {
+    private const SQL_SELECT_ALL_FROM = 'SELECT * FROM ';
+    private const SQL_WHERE = ' WHERE ';
 
     /**
      * Clave primaria. Varchar(4).
@@ -136,7 +138,7 @@ class ejercicio extends fs_model
      */
     public function get_new_codigo($cod = '0001')
     {
-        if (!$this->db->select("SELECT * FROM " . $this->table_name . " WHERE codejercicio = " . $this->var2str($cod) . ";")) {
+        if (!$this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codejercicio = " . $this->var2str($cod) . ";")) {
             return $cod;
         }
 
@@ -206,7 +208,7 @@ class ejercicio extends fs_model
      */
     public function get($cod)
     {
-        $data = $this->db->select("SELECT * FROM " . $this->table_name . " WHERE codejercicio = " . $this->var2str($cod) . ";");
+        $data = $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codejercicio = " . $this->var2str($cod) . ";");
         if ($data) {
             return new ejercicio($data[0]);
         }
@@ -224,7 +226,7 @@ class ejercicio extends fs_model
      */
     public function get_by_fecha($fecha, $solo_abierto = TRUE, $crear = TRUE)
     {
-        $sql = "SELECT * FROM " . $this->table_name . " WHERE fechainicio <= "
+        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "fechainicio <= "
             . $this->var2str($fecha) . " AND fechafin >= " . $this->var2str($fecha) . ";";
 
         $data = $this->db->select($sql);
@@ -262,8 +264,8 @@ class ejercicio extends fs_model
             return FALSE;
         }
 
-        return $this->db->select("SELECT * FROM " . $this->table_name
-                . " WHERE codejercicio = " . $this->var2str($this->codejercicio) . ";");
+        return $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name
+            . self::SQL_WHERE . "codejercicio = " . $this->var2str($this->codejercicio) . ";");
     }
 
     /**
@@ -414,7 +416,7 @@ class ejercicio extends fs_model
         $listae = $this->cache->get_array('m_ejercicio_all');
         if (empty($listae)) {
             /// si no está en caché, leemos de la base de datos
-            $data = $this->db->select("SELECT * FROM " . $this->table_name . " ORDER BY fechainicio DESC;");
+            $data = $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . " ORDER BY fechainicio DESC;");
             if ($data) {
                 foreach ($data as $e) {
                     $listae[] = new ejercicio($e);
@@ -438,7 +440,7 @@ class ejercicio extends fs_model
         $listae = $this->cache->get_array('m_ejercicio_all_abiertos');
         if (empty($listae)) {
             /// si no está en caché, leemos de la base de datos
-            $sql = "SELECT * FROM " . $this->table_name . " WHERE estado = 'ABIERTO' ORDER BY codejercicio DESC;";
+            $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "estado = 'ABIERTO' ORDER BY codejercicio DESC;";
             $data = $this->db->select($sql);
             if ($data) {
                 foreach ($data as $e) {

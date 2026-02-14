@@ -24,6 +24,9 @@
  */
 class cuenta_banco_cliente extends fs_model
 {
+    private const SQL_SELECT_ALL_FROM = 'SELECT * FROM ';
+    private const SQL_WHERE = ' WHERE ';
+
     /**
      * Clave primaria. Varchar(6).
      * @var string
@@ -108,7 +111,7 @@ class cuenta_banco_cliente extends fs_model
 
     public function get($cod)
     {
-        $data = $this->db->select("SELECT * FROM " . $this->table_name . " WHERE codcuenta = " . $this->var2str($cod) . ";");
+        $data = $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codcuenta = " . $this->var2str($cod) . ";");
         if ($data) {
             return new cuenta_banco_cliente($data[0]);
         }
@@ -133,8 +136,8 @@ class cuenta_banco_cliente extends fs_model
             return FALSE;
         }
 
-        return $this->db->select("SELECT * FROM " . $this->table_name
-            . " WHERE codcuenta = " . $this->var2str($this->codcuenta) . ";");
+        return $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name
+            . self::SQL_WHERE . "codcuenta = " . $this->var2str($this->codcuenta) . ";");
     }
 
     public function save()
@@ -179,7 +182,7 @@ class cuenta_banco_cliente extends fs_model
     public function all_from_cliente($codcli)
     {
         $clist = array();
-        $sql = "SELECT * FROM " . $this->table_name . " WHERE codcliente = " . $this->var2str($codcli)
+        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codcliente = " . $this->var2str($codcli)
             . " ORDER BY codcuenta DESC;";
 
         $data = $this->db->select($sql);

@@ -25,6 +25,9 @@
  */
 class cuenta_banco extends fs_model
 {
+    private const SQL_SELECT_ALL_FROM = 'SELECT * FROM ';
+    private const SQL_WHERE = ' WHERE ';
+
     public $codcuenta;
     public $descripcion;
     public $iban;
@@ -60,7 +63,7 @@ class cuenta_banco extends fs_model
 
     public function get($cod)
     {
-        $sql = "SELECT * FROM " . $this->table_name . " WHERE codcuenta = " . $this->var2str($cod) . ";";
+        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codcuenta = " . $this->var2str($cod) . ";";
         $data = $this->db->select($sql);
         if ($data) {
             return new cuenta_banco($data[0]);
@@ -74,7 +77,7 @@ class cuenta_banco extends fs_model
         if (is_null($this->codcuenta)) {
             return FALSE;
         } else {
-            return $this->db->select("SELECT * FROM " . $this->table_name . " WHERE codcuenta = " . $this->var2str($this->codcuenta) . ";");
+            return $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codcuenta = " . $this->var2str($this->codcuenta) . ";");
         }
     }
 
@@ -124,14 +127,14 @@ class cuenta_banco extends fs_model
 
     public function delete()
     {
-        $sql = "DELETE FROM " . $this->table_name . " WHERE codcuenta = " . $this->var2str($this->codcuenta) . ";";
+        $sql = "DELETE FROM " . $this->table_name . self::SQL_WHERE . "codcuenta = " . $this->var2str($this->codcuenta) . ";";
         return $this->db->exec($sql);
     }
 
     public function all()
     {
         $cuentalist = array();
-        $sql = "SELECT * FROM " . $this->table_name . " ORDER BY descripcion ASC;";
+        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . " ORDER BY descripcion ASC;";
         $data = $this->db->select($sql);
         if ($data) {
             foreach ($data as $c) {

@@ -29,6 +29,9 @@ class pais extends fs_model
     public $nombre;
     public $codiso;
 
+    private const SQL_SELECT_ALL_FROM = 'SELECT * FROM ';
+    private const SQL_WHERE = ' WHERE ';
+
     public function __construct($data = FALSE)
     {
         parent::__construct('paises');
@@ -298,7 +301,7 @@ class pais extends fs_model
 
     public function get($cod)
     {
-        $sql = "SELECT * FROM " . $this->table_name . " WHERE codpais = " . $this->var2str($cod) . ";";
+        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codpais = " . $this->var2str($cod) . ";";
         $data = $this->db->select($sql);
         if ($data) {
             return new static($data[0]);
@@ -312,7 +315,7 @@ class pais extends fs_model
         if (is_null($this->codpais)) {
             return FALSE;
         } else {
-            return $this->db->select("SELECT * FROM " . $this->table_name . " WHERE codpais = " . $this->var2str($this->codpais) . ";");
+            return $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codpais = " . $this->var2str($this->codpais) . ";");
         }
     }
 
@@ -358,7 +361,7 @@ class pais extends fs_model
     public function all()
     {
         $paislist = array();
-        $sql = "SELECT * FROM " . $this->table_name . " ORDER BY nombre ASC;";
+        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . " ORDER BY nombre ASC;";
         $data = $this->db->select($sql);
         if ($data) {
             foreach ($data as $p) {
