@@ -17,6 +17,10 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+if (!class_exists('fs_divisa_tools', false) && file_exists(__DIR__ . '/../extras/fs_divisa_tools.php')) {
+    require_once __DIR__ . '/../extras/fs_divisa_tools.php';
+}
+
 require_once 'base/fs_default_items.php';
 
 /**

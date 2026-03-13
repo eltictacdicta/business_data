@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace FacturaScripts\Plugins\business_data;
+namespace FSFramework\Plugins\business_data;
 
 use FSFramework\Event\FSEventDispatcher;
 use FSFramework\Event\TwigInitEvent;
