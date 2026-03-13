@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-// fs_divisa_tools is now part of business_data plugin
-require_once dirname(__FILE__) . '/../extras/fs_divisa_tools.php';
 require_once 'base/fs_default_items.php';
 
 /**
@@ -41,11 +39,6 @@ class admin_empresa extends fs_controller
      * @var empresa
      */
     public $empresa;
-
-    /**
-     * @var fs_divisa_tools
-     */
-    protected $divisa_tools;
 
     /**
      * @var fs_default_items
@@ -474,69 +467,6 @@ class admin_empresa extends fs_controller
             'sendmail' => 'SendMail',
             'smtp' => 'SMTP'
         );
-    }
-
-    /**
-     * Convierte un precio de la divisa_desde a la divisa especificada
-     * @param float $precio
-     * @param string $coddivisa_desde
-     * @param string $coddivisa
-     * @return float
-     */
-    public function divisa_convert($precio, $coddivisa_desde, $coddivisa)
-    {
-        return $this->divisa_tools->divisa_convert($precio, $coddivisa_desde, $coddivisa);
-    }
-
-    /**
-     * Convierte el precio en euros a la divisa preterminada de la empresa.
-     * Por defecto usa las tasas de conversión actuales, pero si se especifica
-     * coddivisa y tasaconv las usará.
-     * @param float $precio
-     * @param string $coddivisa
-     * @param float $tasaconv
-     * @return float
-     */
-    public function euro_convert($precio, $coddivisa = NULL, $tasaconv = NULL)
-    {
-        return $this->divisa_tools->euro_convert($precio, $coddivisa, $tasaconv);
-    }
-
-    /**
-     * Devuelve un string con el número en el formato de número predeterminado.
-     * @param float $num
-     * @param integer $decimales
-     * @param boolean $js
-     * @return string
-     */
-    public function show_numero($num = 0, $decimales = FS_NF0, $js = FALSE)
-    {
-        return $this->divisa_tools->show_numero($num, $decimales, $js);
-    }
-
-    /**
-     * Devuelve un string con el precio en el formato predefinido y con la
-     * divisa seleccionada (o la predeterminada).
-     * @param float $precio
-     * @param string $coddivisa
-     * @param string $simbolo
-     * @param integer $dec nº de decimales
-     * @return string
-     */
-    public function show_precio($precio = 0, $coddivisa = FALSE, $simbolo = TRUE, $dec = FS_NF0)
-    {
-        return $this->divisa_tools->show_precio($precio, $coddivisa, $simbolo, $dec);
-    }
-
-    /**
-     * Devuelve el símbolo de divisa predeterminado
-     * o bien el símbolo de la divisa seleccionada.
-     * @param string $coddivisa
-     * @return string
-     */
-    public function simbolo_divisa($coddivisa = FALSE)
-    {
-        return $this->divisa_tools->simbolo_divisa($coddivisa);
     }
 
     /**

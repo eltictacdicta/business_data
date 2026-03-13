@@ -20,7 +20,7 @@
 /**
  * Este archivo se ejecuta automáticamente cuando se activa el plugin.
  * Define funciones para verificar datos por defecto.
- * La verificación se ejecuta desde business_controller.
+ * La verificación se ejecuta desde los controladores que cargan business_data.
  */
 
 /**
