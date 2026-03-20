@@ -109,6 +109,42 @@ class forma_pago extends fs_model
         return ( $this->codpago == $this->default_items->codpago() );
     }
 
+    public function calcular_vencimiento($fecha, $diaspago = NULL)
+    {
+        $base = \strtotime($fecha . ' ' . $this->vencimiento);
+        if ($base === FALSE) {
+            $base = \strtotime($fecha);
+        }
+
+        if ($base === FALSE) {
+            return $fecha;
+        }
+
+        $dias = $this->get_dias_pago($diaspago);
+        if (empty($dias)) {
+            return date('d-m-Y', $base);
+        }
+
+        sort($dias);
+        $year = intval(date('Y', $base));
+        $month = intval(date('m', $base));
+
+        foreach ($dias as $dia) {
+            $candidate = $this->build_due_date($year, $month, $dia);
+            if ($candidate >= $base) {
+                return date('d-m-Y', $candidate);
+            }
+        }
+
+        $month++;
+        if ($month > 12) {
+            $month = 1;
+            $year++;
+        }
+
+        return date('d-m-Y', $this->build_due_date($year, $month, $dias[0]));
+    }
+
     public function get($cod)
     {
         $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codpago = " . $this->var2str($cod) . ";";
@@ -197,5 +233,28 @@ class forma_pago extends fs_model
         $this->domiciliado = FALSE;
         $this->imprimir = TRUE;
         $this->vencimiento = '+1day';
+    }
+
+    private function build_due_date($year, $month, $day)
+    {
+        $last_day = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+        return mktime(0, 0, 0, $month, min($day, $last_day), $year);
+    }
+
+    private function get_dias_pago($diaspago)
+    {
+        $dias = array();
+        if (is_null($diaspago) || $diaspago === '') {
+            return $dias;
+        }
+
+        foreach (str_getcsv((string) $diaspago) as $dia) {
+            $value = intval($dia);
+            if ($value >= 1 && $value <= 31) {
+                $dias[] = $value;
+            }
+        }
+
+        return array_values(array_unique($dias));
     }
 }
