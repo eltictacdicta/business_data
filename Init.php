@@ -57,44 +57,57 @@ class Init
      */
     private function registerTwigGlobals(\Twig\Environment $twig): void
     {
-        // Load empresa data
         $this->loadEmpresa();
 
-        // Currency variables
         $coddivisa = $this->empresa->coddivisa ?? 'EUR';
-        $simbolo = $this->getSimboloDivisa($coddivisa);
-
         $twig->addGlobal('empresa_coddivisa', $coddivisa);
-        $twig->addGlobal('empresa_simbolo', $simbolo);
-
-        // Inject business_base.js script into head (relative path from web root)
+        $twig->addGlobal('empresa_simbolo', $this->getSimboloDivisa($coddivisa));
         $twig->addGlobal('business_data_js', 'plugins/business_data/view/js/business_base.js');
 
-        // Document translation variables
-        $twig->addGlobal('fs_factura', defined('FS_FACTURA') ? FS_FACTURA : 'factura');
-        $twig->addGlobal('fs_facturas', defined('FS_FACTURAS') ? FS_FACTURAS : 'facturas');
-        $twig->addGlobal('fs_factura_simplificada', defined('FS_FACTURA_SIMPLIFICADA') ? FS_FACTURA_SIMPLIFICADA : 'factura simplificada');
-        $twig->addGlobal('fs_factura_rectificativa', defined('FS_FACTURA_RECTIFICATIVA') ? FS_FACTURA_RECTIFICATIVA : 'factura rectificativa');
-        $twig->addGlobal('fs_albaran', defined('FS_ALBARAN') ? FS_ALBARAN : 'albarán');
-        $twig->addGlobal('fs_albaranes', defined('FS_ALBARANES') ? FS_ALBARANES : 'albaranes');
-        $twig->addGlobal('fs_pedido', defined('FS_PEDIDO') ? FS_PEDIDO : 'pedido');
-        $twig->addGlobal('fs_pedidos', defined('FS_PEDIDOS') ? FS_PEDIDOS : 'pedidos');
-        $twig->addGlobal('fs_presupuesto', defined('FS_PRESUPUESTO') ? FS_PRESUPUESTO : 'presupuesto');
-        $twig->addGlobal('fs_presupuestos', defined('FS_PRESUPUESTOS') ? FS_PRESUPUESTOS : 'presupuestos');
-        $twig->addGlobal('fs_provincia', defined('FS_PROVINCIA') ? FS_PROVINCIA : 'provincia');
-        $twig->addGlobal('fs_apartado', defined('FS_APARTADO') ? FS_APARTADO : 'apartado');
-        $twig->addGlobal('fs_cifnif', defined('FS_CIFNIF') ? FS_CIFNIF : 'CIF/NIF');
-        $twig->addGlobal('fs_iva', defined('FS_IVA') ? FS_IVA : 'IVA');
-        $twig->addGlobal('fs_irpf', defined('FS_IRPF') ? FS_IRPF : 'IRPF');
-        $twig->addGlobal('fs_numero2', defined('FS_NUMERO2') ? FS_NUMERO2 : 'número 2');
-        $twig->addGlobal('fs_serie', defined('FS_SERIE') ? FS_SERIE : 'serie');
-        $twig->addGlobal('fs_series', defined('FS_SERIES') ? FS_SERIES : 'series');
+        $this->registerDocumentGlobals($twig);
+        $this->registerNumberFormatGlobals($twig);
+    }
 
-        // Number format variables
-        $twig->addGlobal('fs_nf0', defined('FS_NF0') ? FS_NF0 : 2);
-        $twig->addGlobal('fs_nf1', defined('FS_NF1') ? FS_NF1 : ',');
-        $twig->addGlobal('fs_nf2', defined('FS_NF2') ? FS_NF2 : '.');
-        $twig->addGlobal('fs_pos_divisa', defined('FS_POS_DIVISA') ? FS_POS_DIVISA : 'right');
+    private function registerDocumentGlobals(\Twig\Environment $twig): void
+    {
+        $documentConstants = [
+            'fs_factura' => ['FS_FACTURA', 'factura'],
+            'fs_facturas' => ['FS_FACTURAS', 'facturas'],
+            'fs_factura_simplificada' => ['FS_FACTURA_SIMPLIFICADA', 'factura simplificada'],
+            'fs_factura_rectificativa' => ['FS_FACTURA_RECTIFICATIVA', 'factura rectificativa'],
+            'fs_albaran' => ['FS_ALBARAN', 'albarán'],
+            'fs_albaranes' => ['FS_ALBARANES', 'albaranes'],
+            'fs_pedido' => ['FS_PEDIDO', 'pedido'],
+            'fs_pedidos' => ['FS_PEDIDOS', 'pedidos'],
+            'fs_presupuesto' => ['FS_PRESUPUESTO', 'presupuesto'],
+            'fs_presupuestos' => ['FS_PRESUPUESTOS', 'presupuestos'],
+            'fs_provincia' => ['FS_PROVINCIA', 'provincia'],
+            'fs_apartado' => ['FS_APARTADO', 'apartado'],
+            'fs_cifnif' => ['FS_CIFNIF', 'CIF/NIF'],
+            'fs_iva' => ['FS_IVA', 'IVA'],
+            'fs_irpf' => ['FS_IRPF', 'IRPF'],
+            'fs_numero2' => ['FS_NUMERO2', 'número 2'],
+            'fs_serie' => ['FS_SERIE', 'serie'],
+            'fs_series' => ['FS_SERIES', 'series'],
+        ];
+
+        foreach ($documentConstants as $twigVar => [$constant, $default]) {
+            $twig->addGlobal($twigVar, defined($constant) ? constant($constant) : $default);
+        }
+    }
+
+    private function registerNumberFormatGlobals(\Twig\Environment $twig): void
+    {
+        $numberConstants = [
+            'fs_nf0' => ['FS_NF0', 2],
+            'fs_nf1' => ['FS_NF1', ','],
+            'fs_nf2' => ['FS_NF2', '.'],
+            'fs_pos_divisa' => ['FS_POS_DIVISA', 'right'],
+        ];
+
+        foreach ($numberConstants as $twigVar => [$constant, $default]) {
+            $twig->addGlobal($twigVar, defined($constant) ? constant($constant) : $default);
+        }
     }
 
     /**

@@ -58,20 +58,38 @@ class cuenta_banco_cliente extends fs_model
     {
         parent::__construct('cuentasbcocli');
         if ($data) {
-            $this->codcliente = isset($data['codcliente']) ? $data['codcliente'] : NULL;
-            $this->codcuenta = isset($data['codcuenta']) ? $data['codcuenta'] : NULL;
-            $this->descripcion = isset($data['descripcion']) ? $data['descripcion'] : NULL;
-            $this->iban = isset($data['iban']) ? $data['iban'] : NULL;
-            $this->swift = isset($data['swift']) ? $data['swift'] : NULL;
-            $this->principal = isset($data['principal']) ? $this->str2bool($data['principal']) : TRUE;
-
-            $this->fmandato = NULL;
-            if (!empty($data['fmandato'])) {
-                $this->fmandato = date('d-m-Y', strtotime($data['fmandato']));
-            }
+            $this->hydrateFromRow($data);
         } else {
             $this->clear();
         }
+    }
+
+    private function hydrateFromRow(array $data): void
+    {
+        $this->codcliente = $data['codcliente'] ?? null;
+        $this->codcuenta = $data['codcuenta'] ?? null;
+        $this->descripcion = $data['descripcion'] ?? null;
+        $this->iban = $data['iban'] ?? null;
+        $this->swift = $data['swift'] ?? null;
+        $this->principal = isset($data['principal']) ? $this->str2bool($data['principal']) : true;
+        if (!empty($data['fmandato'])) {
+            $ts = strtotime($data['fmandato']);
+            $this->fmandato = $ts !== false ? date('Y-m-d', $ts) : null;
+        } else {
+            $this->fmandato = null;
+        }
+    }
+
+    /**
+     * Devuelve la fecha de mandato formateada para presentación (d-m-Y).
+     */
+    public function getFmandatoFormatted(): ?string
+    {
+        if (empty($this->fmandato)) {
+            return null;
+        }
+        $ts = strtotime($this->fmandato);
+        return $ts !== false ? date('d-m-Y', $ts) : null;
     }
 
     protected function install()

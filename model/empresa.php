@@ -70,53 +70,57 @@ class empresa extends fs_model
     {
         parent::__construct('empresa');
         if ($data) {
-            $this->id = $data['id'];
-            $this->xid = isset($data['xid']) ? $data['xid'] : NULL;
-            $this->cifnif = $data['cifnif'];
-            $this->nombre = $data['nombre'];
-            $this->nombrecorto = isset($data['nombrecorto']) ? $data['nombrecorto'] : '';
-            $this->administrador = $data['administrador'];
-            $this->direccion = $data['direccion'];
-            $this->apartado = isset($data['apartado']) ? $data['apartado'] : '';
-            $this->codpostal = isset($data['codpostal']) ? $data['codpostal'] : '';
-            $this->ciudad = isset($data['ciudad']) ? $data['ciudad'] : '';
-            $this->provincia = isset($data['provincia']) ? $data['provincia'] : '';
-            $this->idprovincia = isset($data['idprovincia']) ? $data['idprovincia'] : NULL;
-            $this->codpais = isset($data['codpais']) ? $data['codpais'] : '';
-            $this->telefono = isset($data['telefono']) ? $data['telefono'] : '';
-            $this->fax = isset($data['fax']) ? $data['fax'] : '';
-            $this->email = isset($data['email']) ? $data['email'] : '';
-            $this->web = isset($data['web']) ? $data['web'] : '';
-            $this->horario = isset($data['horario']) ? $data['horario'] : '';
-            $this->contintegrada = isset($data['contintegrada']) ? $this->str2bool($data['contintegrada']) : FALSE;
-            $this->codejercicio = isset($data['codejercicio']) ? $data['codejercicio'] : NULL;
-            $this->codalmacen = isset($data['codalmacen']) ? $data['codalmacen'] : NULL;
-            $this->coddivisa = isset($data['coddivisa']) ? $data['coddivisa'] : NULL;
-            $this->codpago = isset($data['codpago']) ? $data['codpago'] : NULL;
-            $this->codserie = isset($data['codserie']) ? $data['codserie'] : NULL;
-            $this->codcuentarem = isset($data['codcuentarem']) ? $data['codcuentarem'] : NULL;
-            $this->codedi = isset($data['codedi']) ? $data['codedi'] : NULL;
-            $this->logo = isset($data['logo']) ? $data['logo'] : '';
-            $this->lema = isset($data['lema']) ? $data['lema'] : '';
-            $this->pie_factura = isset($data['pie_factura']) ? $data['pie_factura'] : '';
-            $this->recequivalencia = isset($data['recequivalencia']) ? $this->str2bool($data['recequivalencia']) : FALSE;
-            $this->stockpedidos = isset($data['stockpedidos']) ? $this->str2bool($data['stockpedidos']) : FALSE;
-
-            // Inicializar configuración de email
-            $this->email_config = array(
-                'mail_mailer' => 'smtp',
-                'mail_host' => '',
-                'mail_port' => 587,
-                'mail_user' => '',
-                'mail_password' => '',
-                'mail_enc' => 'tls',
-                'mail_low_security' => false,
-                'mail_bcc' => '',
-                'mail_firma' => ''
-            );
+            $this->hydrateFromRow($data);
         } else {
             $this->clear();
         }
+    }
+
+    private function hydrateFromRow(array $data): void
+    {
+        $this->id = $data['id'];
+        $this->xid = $data['xid'] ?? NULL;
+        $this->cifnif = $data['cifnif'];
+        $this->nombre = $data['nombre'];
+        $this->nombrecorto = $data['nombrecorto'] ?? '';
+        $this->administrador = $data['administrador'];
+        $this->direccion = $data['direccion'];
+        $this->apartado = $data['apartado'] ?? '';
+        $this->codpostal = $data['codpostal'] ?? '';
+        $this->ciudad = $data['ciudad'] ?? '';
+        $this->provincia = $data['provincia'] ?? '';
+        $this->idprovincia = $data['idprovincia'] ?? NULL;
+        $this->codpais = $data['codpais'] ?? '';
+        $this->telefono = $data['telefono'] ?? '';
+        $this->fax = $data['fax'] ?? '';
+        $this->email = $data['email'] ?? '';
+        $this->web = $data['web'] ?? '';
+        $this->horario = $data['horario'] ?? '';
+        $this->contintegrada = isset($data['contintegrada']) ? $this->str2bool($data['contintegrada']) : FALSE;
+        $this->codejercicio = $data['codejercicio'] ?? NULL;
+        $this->codalmacen = $data['codalmacen'] ?? NULL;
+        $this->coddivisa = $data['coddivisa'] ?? NULL;
+        $this->codpago = $data['codpago'] ?? NULL;
+        $this->codserie = $data['codserie'] ?? NULL;
+        $this->codcuentarem = $data['codcuentarem'] ?? NULL;
+        $this->codedi = $data['codedi'] ?? NULL;
+        $this->logo = $data['logo'] ?? '';
+        $this->lema = $data['lema'] ?? '';
+        $this->pie_factura = $data['pie_factura'] ?? '';
+        $this->recequivalencia = isset($data['recequivalencia']) ? $this->str2bool($data['recequivalencia']) : FALSE;
+        $this->stockpedidos = isset($data['stockpedidos']) ? $this->str2bool($data['stockpedidos']) : FALSE;
+
+        $this->email_config = [
+            'mail_mailer' => 'smtp',
+            'mail_host' => '',
+            'mail_port' => 587,
+            'mail_user' => '',
+            'mail_password' => '',
+            'mail_enc' => 'tls',
+            'mail_low_security' => false,
+            'mail_bcc' => '',
+            'mail_firma' => '',
+        ];
     }
 
     protected function install()

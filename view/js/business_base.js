@@ -19,7 +19,7 @@
 /**
  * Detección de tipo de input para Firefox
  */
-var input_number = "number";
+let input_number = "number";
 if (navigator.userAgent.toLowerCase().indexOf("firefox") > -1) {
     input_number = "text";
 }
@@ -32,8 +32,8 @@ if (navigator.userAgent.toLowerCase().indexOf("firefox") > -1) {
  */
 function fs_round(value, precision)
 {
-    var m, f, isHalf, sgn;
-    precision |= 0;
+    let m, f, isHalf, sgn;
+    precision = Number.isFinite(precision) ? Math.trunc(precision) : 0;
     m = Math.pow(10, precision);
     value *= m;
     sgn = (value > 0) | -(value < 0);
@@ -57,10 +57,13 @@ function fs_round(value, precision)
  */
 function number_format(number, decimals, dec_point, thousands_sep)
 {
-    var n = number, c = isNaN(decimals = Math.abs(decimals)) ? 2 : decimals;
-    var d = (dec_point == undefined) ? "," : dec_point;
-    var t = (thousands_sep == undefined) ? "." : thousands_sep, s = n < 0 ? "-" : "";
-    var i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
+    let n = number;
+    const c = isNaN(decimals = Math.abs(decimals)) ? 2 : decimals;
+    const d = (dec_point == undefined) ? "," : dec_point;
+    const t = (thousands_sep == undefined) ? "." : thousands_sep;
+    const s = n < 0 ? "-" : "";
+    const i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "";
+    const j = i.length > 3 ? i.length % 3 : 0;
     return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
 }
 
@@ -68,15 +71,15 @@ function number_format(number, decimals, dec_point, thousands_sep)
  * Codificación/Decodificación Base64
  * Usado para pasar descripciones de artículos en URLs
  */
-var Base64 = {
+const Base64 = {
     // private property
     _keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
 
     // public method for encoding
     encode: function (input) {
-        var output = "";
-        var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
-        var i = 0;
+        let output = "";
+        let chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+        let i = 0;
 
         input = Base64._utf8_encode(input);
 
@@ -108,10 +111,10 @@ var Base64 = {
 
     // public method for decoding
     decode: function (input) {
-        var output = "";
-        var chr1, chr2, chr3;
-        var enc1, enc2, enc3, enc4;
-        var i = 0;
+        let output = "";
+        let chr1, chr2, chr3;
+        let enc1, enc2, enc3, enc4;
+        let i = 0;
 
         input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
 
@@ -146,11 +149,11 @@ var Base64 = {
     // private method for UTF-8 encoding
     _utf8_encode: function (string) {
         string = string.replace(/\r\n/g, "\n");
-        var utftext = "";
+        let utftext = "";
 
-        for (var n = 0; n < string.length; n++) {
+        for (let n = 0; n < string.length; n++) {
 
-            var c = string.charCodeAt(n);
+            const c = string.charCodeAt(n);
 
             if (c < 128) {
                 utftext += String.fromCharCode(c);
@@ -170,9 +173,9 @@ var Base64 = {
 
     // private method for UTF-8 decoding
     _utf8_decode: function (utftext) {
-        var string = "";
-        var i = 0;
-        var c = 0, c1 = 0, c2 = 0, c3 = 0;
+        let string = "";
+        let i = 0;
+        let c = 0, c1 = 0, c2 = 0, c3 = 0;
 
         while (i < utftext.length) {
 

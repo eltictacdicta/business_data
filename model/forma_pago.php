@@ -106,7 +106,7 @@ class forma_pago extends fs_model
      */
     public function is_default()
     {
-        return ( $this->codpago == $this->default_items->codpago() );
+        return $this->codpago == $this->default_items->codpago();
     }
 
     public function calcular_vencimiento($fecha, $diaspago = NULL)

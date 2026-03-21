@@ -30,6 +30,10 @@ require_once 'base/fs_default_items.php';
 class admin_empresa extends fs_controller
 {
 
+    private const DEFAULT_MAIL_BODY = "Buenos días, le adjunto su #DOCUMENTO#.\n#FIRMA#";
+    private const LOGO_PNG_PATH = 'images/logo.png';
+    private const LOGO_JPG_PATH = 'images/logo.jpg';
+
     public $almacen;
     public $cuenta_banco;
     public $divisa;
@@ -124,38 +128,48 @@ class admin_empresa extends fs_controller
             $this->default_items = new fs_default_items();
         }
 
-        if (isset($this->empresa) && $this->empresa && isset($this->empresa->id) && $this->empresa->id) {
-            // Set all default items based on empresa configuration
-            if (isset($this->empresa->codejercicio) && $this->empresa->codejercicio) {
-                $this->default_items->set_codejercicio($this->empresa->codejercicio);
-            }
-            if (isset($this->empresa->codalmacen) && $this->empresa->codalmacen) {
-                $this->default_items->set_codalmacen($this->empresa->codalmacen);
-            }
-            if (isset($this->empresa->codpago) && $this->empresa->codpago) {
-                $this->default_items->set_codpago($this->empresa->codpago);
-            }
-            if (isset($this->empresa->codpais) && $this->empresa->codpais) {
-                $this->default_items->set_codpais($this->empresa->codpais);
-            }
-            if (isset($this->empresa->codserie) && $this->empresa->codserie) {
-                $this->default_items->set_codserie($this->empresa->codserie);
-            }
-            if (isset($this->empresa->coddivisa) && $this->empresa->coddivisa) {
-                $this->default_items->set_coddivisa($this->empresa->coddivisa);
+        if (!isset($this->empresa) || !$this->empresa || empty($this->empresa->id)) {
+            return;
+        }
+
+        $mappings = [
+            'codejercicio' => 'set_codejercicio',
+            'codalmacen' => 'set_codalmacen',
+            'codpago' => 'set_codpago',
+            'codpais' => 'set_codpais',
+            'codserie' => 'set_codserie',
+            'coddivisa' => 'set_coddivisa',
+        ];
+
+        foreach ($mappings as $property => $setter) {
+            if (!empty($this->empresa->{$property})) {
+                $this->default_items->{$setter}($this->empresa->{$property});
             }
         }
     }
 
     protected function private_core()
     {
-        /// Asegurar que la empresa esté inicializada
         $this->initialize_empresa();
-
-        // Initialize default items when empresa data changes
         $this->initialize_default_items();
+        $this->initializeModels();
 
-        /// inicializamos para que se creen las tablas
+        $fsvar = new fs_var();
+        $this->loadConfigDefaults($fsvar);
+        $this->loadTraducciones();
+        $this->initializeDivisaTools();
+
+        $this->dispatchAction($fsvar);
+        $this->load_logo();
+
+        $subcuenta = filter_input(INPUT_GET, 'subcuenta');
+        if ($subcuenta) {
+            $this->buscar_subcuenta($subcuenta);
+        }
+    }
+
+    private function initializeModels(): void
+    {
         $this->almacen = new almacen();
         $this->cuenta_banco = new cuenta_banco();
         $this->divisa = new divisa();
@@ -163,10 +177,10 @@ class admin_empresa extends fs_controller
         $this->forma_pago = new forma_pago();
         $this->serie = new serie();
         $this->pais = new pais();
+    }
 
-        $fsvar = new fs_var();
-
-        /// obtenemos los datos de configuración de impresión
+    private function loadConfigDefaults($fsvar): void
+    {
         $this->impresion = array(
             'print_ref' => '1',
             'print_dto' => '1',
@@ -175,164 +189,48 @@ class admin_empresa extends fs_controller
         );
         $this->impresion = $fsvar->array_get($this->impresion, FALSE);
 
-        /// obtenemos los datos de las plantillas de emails
         $this->email_plantillas = array(
-            'mail_factura' => "Buenos días, le adjunto su #DOCUMENTO#.\n#FIRMA#",
-            'mail_albaran' => "Buenos días, le adjunto su #DOCUMENTO#.\n#FIRMA#",
-            'mail_pedido' => "Buenos días, le adjunto su #DOCUMENTO#.\n#FIRMA#",
-            'mail_presupuesto' => "Buenos días, le adjunto su #DOCUMENTO#.\n#FIRMA#",
+            'mail_factura' => self::DEFAULT_MAIL_BODY,
+            'mail_albaran' => self::DEFAULT_MAIL_BODY,
+            'mail_pedido' => self::DEFAULT_MAIL_BODY,
+            'mail_presupuesto' => self::DEFAULT_MAIL_BODY,
         );
         $this->email_plantillas = $fsvar->array_get($this->email_plantillas, FALSE);
+    }
 
-        /// obtenemos las traducciones de documentos
-        $this->traducciones = array(
-            'FACTURA' => defined('FS_FACTURA') ? FS_FACTURA : 'factura',
-            'FACTURAS' => defined('FS_FACTURAS') ? FS_FACTURAS : 'facturas',
-            'FACTURA_SIMPLIFICADA' => defined('FS_FACTURA_SIMPLIFICADA') ? FS_FACTURA_SIMPLIFICADA : 'factura simplificada',
-            'FACTURA_RECTIFICATIVA' => defined('FS_FACTURA_RECTIFICATIVA') ? FS_FACTURA_RECTIFICATIVA : 'factura rectificativa',
-            'ALBARAN' => defined('FS_ALBARAN') ? FS_ALBARAN : 'albarán',
-            'ALBARANES' => defined('FS_ALBARANES') ? FS_ALBARANES : 'albaranes',
-            'PEDIDO' => defined('FS_PEDIDO') ? FS_PEDIDO : 'pedido',
-            'PEDIDOS' => defined('FS_PEDIDOS') ? FS_PEDIDOS : 'pedidos',
-            'PRESUPUESTO' => defined('FS_PRESUPUESTO') ? FS_PRESUPUESTO : 'presupuesto',
-            'PRESUPUESTOS' => defined('FS_PRESUPUESTOS') ? FS_PRESUPUESTOS : 'presupuestos',
-            'PROVINCIA' => defined('FS_PROVINCIA') ? FS_PROVINCIA : 'provincia',
-            'APARTADO' => defined('FS_APARTADO') ? FS_APARTADO : 'apartado',
-            'CIFNIF' => defined('FS_CIFNIF') ? FS_CIFNIF : 'CIF/NIF',
-            'IVA' => defined('FS_IVA') ? FS_IVA : 'IVA',
-            'IRPF' => defined('FS_IRPF') ? FS_IRPF : 'IRPF',
-            'NUMERO2' => defined('FS_NUMERO2') ? FS_NUMERO2 : 'número 2',
-            'SERIE' => defined('FS_SERIE') ? FS_SERIE : 'serie',
-            'SERIES' => defined('FS_SERIES') ? FS_SERIES : 'series',
-        );
+    private function loadTraducciones(): void
+    {
+        $defaults = [
+            'FACTURA' => 'factura',
+            'FACTURAS' => 'facturas',
+            'FACTURA_SIMPLIFICADA' => 'factura simplificada',
+            'FACTURA_RECTIFICATIVA' => 'factura rectificativa',
+            'ALBARAN' => 'albarán',
+            'ALBARANES' => 'albaranes',
+            'PEDIDO' => 'pedido',
+            'PEDIDOS' => 'pedidos',
+            'PRESUPUESTO' => 'presupuesto',
+            'PRESUPUESTOS' => 'presupuestos',
+            'PROVINCIA' => 'provincia',
+            'APARTADO' => 'apartado',
+            'CIFNIF' => 'CIF/NIF',
+            'IVA' => 'IVA',
+            'IRPF' => 'IRPF',
+            'NUMERO2' => 'número 2',
+            'SERIE' => 'serie',
+            'SERIES' => 'series',
+        ];
 
-        /// Inicializamos las herramientas de divisa con la divisa de la empresa
+        foreach ($defaults as $key => $default) {
+            $constant = 'FS_' . $key;
+            $this->traducciones[$key] = defined($constant) ? constant($constant) : $default;
+        }
+    }
+
+    private function initializeDivisaTools(): void
+    {
         $coddivisa = ($this->empresa && $this->empresa->coddivisa) ? $this->empresa->coddivisa : 'EUR';
         $this->divisa_tools = new fs_divisa_tools($coddivisa);
-
-        if (filter_input(INPUT_POST, 'nombre')) {
-            $fields = [
-                'nombre',
-                'nombrecorto',
-                'cifnif',
-                'administrador',
-                'codpais',
-                'provincia',
-                'ciudad',
-                'direccion',
-                'codpostal',
-                'apartado',
-                'telefono',
-                'fax',
-                'web',
-                'email',
-                'lema',
-                'horario',
-                'codejercicio',
-                'codserie',
-                'coddivisa',
-                'codpago',
-                'codalmacen',
-                'pie_factura'
-            ];
-            foreach ($fields as $field) {
-                $value = filter_input(INPUT_POST, $field);
-                if ($value !== NULL) {
-                    $this->empresa->{$field} = $value;
-                }
-            }
-            $this->empresa->contintegrada = (bool) filter_input(INPUT_POST, 'contintegrada');
-            $this->empresa->recequivalencia = (bool) filter_input(INPUT_POST, 'recequivalencia');
-
-            /// configuración de email
-            $this->empresa->email_config['mail_password'] = filter_input(INPUT_POST, 'mail_password');
-            $this->empresa->email_config['mail_bcc'] = filter_input(INPUT_POST, 'mail_bcc');
-            $this->empresa->email_config['mail_firma'] = filter_input(INPUT_POST, 'mail_firma');
-            $this->empresa->email_config['mail_mailer'] = filter_input(INPUT_POST, 'mail_mailer');
-            $this->empresa->email_config['mail_host'] = filter_input(INPUT_POST, 'mail_host');
-            $this->empresa->email_config['mail_port'] = intval(filter_input(INPUT_POST, 'mail_port'));
-            $this->empresa->email_config['mail_enc'] = strtolower(filter_input(INPUT_POST, 'mail_enc'));
-            $this->empresa->email_config['mail_user'] = filter_input(INPUT_POST, 'mail_user');
-            $this->empresa->email_config['mail_low_security'] = (bool) filter_input(INPUT_POST, 'mail_low_security');
-
-            if ($this->empresa->save()) {
-                /// guardamos las opciones por defecto de almacén y forma de pago
-                $this->save_codalmacen(filter_input(INPUT_POST, 'codalmacen'));
-                $this->save_codpago(filter_input(INPUT_POST, 'codpago'));
-
-                $this->new_message('Datos guardados correctamente.');
-                $this->mail_test();
-
-                // Actualizamos los valores por defecto después de guardar
-                $this->initialize_default_items();
-            } else {
-                $this->new_error_msg('Error al guardar los datos.');
-            }
-
-            /// guardamos los datos de impresión
-            $this->impresion['print_ref'] = (filter_input(INPUT_POST, 'print_ref') ? 1 : 0);
-            $this->impresion['print_dto'] = (filter_input(INPUT_POST, 'print_dto') ? 1 : 0);
-            $this->impresion['print_alb'] = (filter_input(INPUT_POST, 'print_alb') ? 1 : 0);
-            $this->impresion['print_formapago'] = (filter_input(INPUT_POST, 'print_formapago') ? 1 : 0);
-            $fsvar->array_save($this->impresion);
-
-            /// guardamos las plantillas de emails
-            $this->email_plantillas['mail_factura'] = filter_input(INPUT_POST, 'mail_factura');
-            $this->email_plantillas['mail_albaran'] = filter_input(INPUT_POST, 'mail_albaran');
-            if (filter_input(INPUT_POST, 'mail_pedido')) {
-                $this->email_plantillas['mail_pedido'] = filter_input(INPUT_POST, 'mail_pedido');
-                $this->email_plantillas['mail_presupuesto'] = filter_input(INPUT_POST, 'mail_presupuesto');
-            }
-            $fsvar->array_save($this->email_plantillas);
-
-            /// guardamos las traducciones de documentos
-            $this->save_traducciones();
-        } else if (filter_input(INPUT_POST, 'logo')) {
-            $this->cambiar_logo();
-        } else if (filter_input(INPUT_GET, 'delete_logo')) {
-            $this->delete_logo();
-        } else if (filter_input(INPUT_GET, 'delete_cuenta')) { /// eliminar cuenta bancaria
-            $cuenta = $this->cuenta_banco->get(filter_input(INPUT_GET, 'delete_cuenta'));
-            if ($cuenta) {
-                if ($cuenta->delete()) {
-                    $this->new_message('Cuenta bancaria eliminada correctamente.');
-                } else {
-                    $this->new_error_msg('Imposible eliminar la cuenta bancaria.');
-                }
-            } else {
-                $this->new_error_msg('Cuenta bancaria no encontrada.');
-            }
-        } else if (filter_input(INPUT_POST, 'iban')) { /// añadir/modificar cuenta bancaria
-            if (filter_input(INPUT_POST, 'codcuenta')) {
-                $cuentab = $this->cuenta_banco->get(filter_input(INPUT_POST, 'codcuenta'));
-            } else {
-                $cuentab = new cuenta_banco();
-            }
-
-            $cuentab->descripcion = filter_input(INPUT_POST, 'descripcion');
-            $cuentab->iban = filter_input(INPUT_POST, 'iban');
-            $cuentab->swift = filter_input(INPUT_POST, 'swift');
-
-            $cuentab->codsubcuenta = NULL;
-            if (filter_input(INPUT_POST, 'codsubcuenta')) {
-                $cuentab->codsubcuenta = filter_input(INPUT_POST, 'codsubcuenta');
-            }
-
-            if ($cuentab->save()) {
-                $this->new_message('Cuenta bancaria guardada correctamente.');
-            } else {
-                $this->new_error_msg('Imposible guardar la cuenta bancaria.');
-            }
-        } else {
-            $this->fix_logo();
-        }
-
-        $this->load_logo();
-
-        // Llamando la funcion que realiza el autocomplete
-        if (filter_input(INPUT_GET, 'subcuenta')) {
-            $this->buscar_subcuenta(filter_input(INPUT_GET, 'subcuenta'));
-        }
     }
 
     /**
@@ -363,6 +261,127 @@ class admin_empresa extends fs_controller
     {
         setcookie('default_formapago', $cod, time() + FS_COOKIES_EXPIRE);
         $this->default_items->set_codpago($cod);
+    }
+
+    private function dispatchAction($fsvar): void
+    {
+        if (filter_input(INPUT_POST, 'nombre')) {
+            $this->handleEmpresaSave($fsvar);
+        } else if (filter_input(INPUT_POST, 'logo')) {
+            $this->cambiar_logo();
+        } else if (filter_input(INPUT_GET, 'delete_logo')) {
+            $this->delete_logo();
+        } else if (filter_input(INPUT_POST, 'delete_cuenta')) {
+            $this->handleDeleteCuenta();
+        } else if (filter_input(INPUT_POST, 'iban')) {
+            $this->handleSaveCuenta();
+        } else {
+            $this->fix_logo();
+        }
+    }
+
+    private function handleEmpresaSave($fsvar): void
+    {
+        $this->applyEmpresaFields();
+        $this->applyEmailConfig();
+
+        if ($this->empresa->save()) {
+            $this->save_codalmacen(filter_input(INPUT_POST, 'codalmacen'));
+            $this->save_codpago(filter_input(INPUT_POST, 'codpago'));
+            $this->new_message('Datos guardados correctamente.');
+            $this->mail_test();
+            $this->initialize_default_items();
+        } else {
+            $this->new_error_msg('Error al guardar los datos.');
+        }
+
+        $this->savePrintConfig($fsvar);
+        $this->saveEmailTemplates($fsvar);
+        $this->save_traducciones();
+    }
+
+    private function applyEmpresaFields(): void
+    {
+        $fields = [
+            'nombre', 'nombrecorto', 'cifnif', 'administrador', 'codpais',
+            'provincia', 'ciudad', 'direccion', 'codpostal', 'apartado',
+            'telefono', 'fax', 'web', 'email', 'lema', 'horario',
+            'codejercicio', 'codserie', 'coddivisa', 'codpago', 'codalmacen',
+            'pie_factura',
+        ];
+        foreach ($fields as $field) {
+            $value = filter_input(INPUT_POST, $field);
+            if ($value !== NULL) {
+                $this->empresa->{$field} = $value;
+            }
+        }
+        $this->empresa->contintegrada = (bool) filter_input(INPUT_POST, 'contintegrada');
+        $this->empresa->recequivalencia = (bool) filter_input(INPUT_POST, 'recequivalencia');
+    }
+
+    private function applyEmailConfig(): void
+    {
+        $this->empresa->email_config['mail_password'] = filter_input(INPUT_POST, 'mail_password');
+        $this->empresa->email_config['mail_bcc'] = filter_input(INPUT_POST, 'mail_bcc');
+        $this->empresa->email_config['mail_firma'] = filter_input(INPUT_POST, 'mail_firma');
+        $this->empresa->email_config['mail_mailer'] = filter_input(INPUT_POST, 'mail_mailer');
+        $this->empresa->email_config['mail_host'] = filter_input(INPUT_POST, 'mail_host');
+        $this->empresa->email_config['mail_port'] = intval(filter_input(INPUT_POST, 'mail_port'));
+        $this->empresa->email_config['mail_enc'] = strtolower(filter_input(INPUT_POST, 'mail_enc'));
+        $this->empresa->email_config['mail_user'] = filter_input(INPUT_POST, 'mail_user');
+        $this->empresa->email_config['mail_low_security'] = (bool) filter_input(INPUT_POST, 'mail_low_security');
+    }
+
+    private function savePrintConfig($fsvar): void
+    {
+        $this->impresion['print_ref'] = (filter_input(INPUT_POST, 'print_ref') ? 1 : 0);
+        $this->impresion['print_dto'] = (filter_input(INPUT_POST, 'print_dto') ? 1 : 0);
+        $this->impresion['print_alb'] = (filter_input(INPUT_POST, 'print_alb') ? 1 : 0);
+        $this->impresion['print_formapago'] = (filter_input(INPUT_POST, 'print_formapago') ? 1 : 0);
+        $fsvar->array_save($this->impresion);
+    }
+
+    private function saveEmailTemplates($fsvar): void
+    {
+        $this->email_plantillas['mail_factura'] = filter_input(INPUT_POST, 'mail_factura');
+        $this->email_plantillas['mail_albaran'] = filter_input(INPUT_POST, 'mail_albaran');
+        if (filter_input(INPUT_POST, 'mail_pedido')) {
+            $this->email_plantillas['mail_pedido'] = filter_input(INPUT_POST, 'mail_pedido');
+            $this->email_plantillas['mail_presupuesto'] = filter_input(INPUT_POST, 'mail_presupuesto');
+        }
+        $fsvar->array_save($this->email_plantillas);
+    }
+
+    private function handleDeleteCuenta(): void
+    {
+        $cuenta = $this->cuenta_banco->get(filter_input(INPUT_GET, 'delete_cuenta'));
+        if (!$cuenta) {
+            $this->new_error_msg('Cuenta bancaria no encontrada.');
+            return;
+        }
+
+        if ($cuenta->delete()) {
+            $this->new_message('Cuenta bancaria eliminada correctamente.');
+        } else {
+            $this->new_error_msg('Imposible eliminar la cuenta bancaria.');
+        }
+    }
+
+    private function handleSaveCuenta(): void
+    {
+        $codcuenta = filter_input(INPUT_POST, 'codcuenta');
+        $cuentab = $codcuenta ? $this->cuenta_banco->get($codcuenta) : new cuenta_banco();
+
+        $cuentab->descripcion = filter_input(INPUT_POST, 'descripcion');
+        $cuentab->iban = filter_input(INPUT_POST, 'iban');
+        $cuentab->swift = filter_input(INPUT_POST, 'swift');
+        $cuentab->codsubcuenta = filter_input(INPUT_POST, 'codsubcuenta') ?: NULL;
+
+        if ($cuentab->save()) {
+            $this->new_message('Cuenta bancaria guardada correctamente.');
+        } else {
+            $this->new_error_msg('Imposible guardar la cuenta bancaria.');
+        }
     }
 
     private function mail_test()
@@ -410,19 +429,19 @@ class admin_empresa extends fs_controller
         }
 
         if (file_exists('tmp/' . FS_TMP_NAME . 'logo.png')) {
-            rename('tmp/' . FS_TMP_NAME . 'logo.png', FS_MYDOCS . 'images/logo.png');
+            rename('tmp/' . FS_TMP_NAME . 'logo.png', FS_MYDOCS . self::LOGO_PNG_PATH);
         } else if (file_exists('tmp/' . FS_TMP_NAME . 'logo.jpg')) {
-            rename('tmp/' . FS_TMP_NAME . 'logo.jpg', FS_MYDOCS . 'images/logo.jpg');
+            rename('tmp/' . FS_TMP_NAME . 'logo.jpg', FS_MYDOCS . self::LOGO_JPG_PATH);
         }
     }
 
     private function load_logo()
     {
         $this->logo = '';
-        if (file_exists(FS_MYDOCS . 'images/logo.png')) {
-            $this->logo = 'images/logo.png';
-        } else if (file_exists(FS_MYDOCS . 'images/logo.jpg')) {
-            $this->logo = 'images/logo.jpg';
+        if (file_exists(FS_MYDOCS . self::LOGO_PNG_PATH)) {
+            $this->logo = self::LOGO_PNG_PATH;
+        } else if (file_exists(FS_MYDOCS . self::LOGO_JPG_PATH)) {
+            $this->logo = self::LOGO_JPG_PATH;
         }
     }
 
@@ -435,9 +454,9 @@ class admin_empresa extends fs_controller
             $this->delete_logo();
 
             if (substr(strtolower($_FILES['fimagen']['name']), -3) == 'png') {
-                copy($_FILES['fimagen']['tmp_name'], FS_MYDOCS . "images/logo.png");
+                copy($_FILES['fimagen']['tmp_name'], FS_MYDOCS . self::LOGO_PNG_PATH);
             } else {
-                copy($_FILES['fimagen']['tmp_name'], FS_MYDOCS . "images/logo.jpg");
+                copy($_FILES['fimagen']['tmp_name'], FS_MYDOCS . self::LOGO_JPG_PATH);
             }
 
             $this->new_message('Logotipo guardado correctamente.');
@@ -446,11 +465,11 @@ class admin_empresa extends fs_controller
 
     private function delete_logo()
     {
-        if (file_exists(FS_MYDOCS . 'images/logo.png')) {
-            unlink(FS_MYDOCS . 'images/logo.png');
+        if (file_exists(FS_MYDOCS . self::LOGO_PNG_PATH)) {
+            unlink(FS_MYDOCS . self::LOGO_PNG_PATH);
             $this->new_message('Logotipo borrado correctamente.');
-        } else if (file_exists(FS_MYDOCS . 'images/logo.jpg')) {
-            unlink(FS_MYDOCS . 'images/logo.jpg');
+        } else if (file_exists(FS_MYDOCS . self::LOGO_JPG_PATH)) {
+            unlink(FS_MYDOCS . self::LOGO_JPG_PATH);
             $this->new_message('Logotipo borrado correctamente.');
         }
     }

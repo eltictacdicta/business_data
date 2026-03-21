@@ -27,6 +27,7 @@ class cuenta_banco extends fs_model
 {
     private const SQL_SELECT_ALL_FROM = 'SELECT * FROM ';
     private const SQL_WHERE = ' WHERE ';
+    private const PK_CODCUENTA = 'codcuenta = ';
 
     public $codcuenta;
     public $descripcion;
@@ -63,7 +64,7 @@ class cuenta_banco extends fs_model
 
     public function get($cod)
     {
-        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codcuenta = " . $this->var2str($cod) . ";";
+        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . self::PK_CODCUENTA . $this->var2str($cod) . ";";
         $data = $this->db->select($sql);
         if ($data) {
             return new cuenta_banco($data[0]);
@@ -77,7 +78,7 @@ class cuenta_banco extends fs_model
         if (is_null($this->codcuenta)) {
             return FALSE;
         } else {
-            return $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codcuenta = " . $this->var2str($this->codcuenta) . ";");
+            return $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . self::PK_CODCUENTA . $this->var2str($this->codcuenta) . ";");
         }
     }
 
@@ -106,7 +107,7 @@ class cuenta_banco extends fs_model
                     ", oficina = " . $this->var2str($this->oficina) .
                     ", dc = " . $this->var2str($this->dc) .
                     ", cuenta = " . $this->var2str($this->cuenta) .
-                    " WHERE codcuenta = " . $this->var2str($this->codcuenta) . ";";
+                    self::SQL_WHERE . self::PK_CODCUENTA . $this->var2str($this->codcuenta) . ";";
                 return $this->db->exec($sql);
             } else {
                 $sql = "INSERT INTO " . $this->table_name . " (codcuenta,descripcion,iban,swift,entidad,oficina,dc,cuenta) VALUES (" .
@@ -127,7 +128,7 @@ class cuenta_banco extends fs_model
 
     public function delete()
     {
-        $sql = "DELETE FROM " . $this->table_name . self::SQL_WHERE . "codcuenta = " . $this->var2str($this->codcuenta) . ";";
+        $sql = "DELETE FROM " . $this->table_name . self::SQL_WHERE . self::PK_CODCUENTA . $this->var2str($this->codcuenta) . ";";
         return $this->db->exec($sql);
     }
 

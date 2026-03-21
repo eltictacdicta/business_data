@@ -27,6 +27,10 @@ class ejercicio extends fs_model
 {
     private const SQL_SELECT_ALL_FROM = 'SELECT * FROM ';
     private const SQL_WHERE = ' WHERE ';
+    private const YEAR_END_FORMAT = '31-12-Y';
+    private const PK_CODEJERCICIO = 'codejercicio = ';
+    private const LABEL_DEBE = ' Debe: ';
+    private const LABEL_HABER = ' | Haber: ';
 
     /**
      * Clave primaria. Varchar(4).
@@ -93,7 +97,7 @@ class ejercicio extends fs_model
             $this->codejercicio = NULL;
             $this->nombre = '';
             $this->fechainicio = Date('01-01-Y');
-            $this->fechafin = Date('31-12-Y');
+            $this->fechafin = Date(self::YEAR_END_FORMAT);
             $this->estado = 'ABIERTO';
             $this->idasientocierre = NULL;
             $this->idasientopyg = NULL;
@@ -110,7 +114,7 @@ class ejercicio extends fs_model
         return "INSERT INTO " . $this->table_name . " (codejercicio,nombre,fechainicio,fechafin,
          estado,longsubcuenta,plancontable,idasientoapertura,idasientopyg,idasientocierre)
          VALUES ('" . Date('Y') . "','" . Date('Y') . "'," . $this->var2str(Date('01-01-Y')) . ",
-         " . $this->var2str(Date('31-12-Y')) . ",'ABIERTO',10,'08',NULL,NULL,NULL);";
+         " . $this->var2str(Date(self::YEAR_END_FORMAT)) . ",'ABIERTO',10,'08',NULL,NULL,NULL);";
     }
 
     /**
@@ -119,7 +123,7 @@ class ejercicio extends fs_model
      */
     public function abierto()
     {
-        return ($this->estado == 'ABIERTO');
+        return $this->estado == 'ABIERTO';
     }
 
     /**
@@ -138,7 +142,7 @@ class ejercicio extends fs_model
      */
     public function get_new_codigo($cod = '0001')
     {
-        if (!$this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codejercicio = " . $this->var2str($cod) . ";")) {
+        if (!$this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . self::PK_CODEJERCICIO . $this->var2str($cod) . ";")) {
             return $cod;
         }
 
@@ -169,7 +173,7 @@ class ejercicio extends fs_model
      */
     public function is_default()
     {
-        return ( $this->codejercicio == $this->default_items->codejercicio() );
+        return $this->codejercicio == $this->default_items->codejercicio();
     }
 
     /**
@@ -208,7 +212,7 @@ class ejercicio extends fs_model
      */
     public function get($cod)
     {
-        $data = $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . "codejercicio = " . $this->var2str($cod) . ";");
+        $data = $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name . self::SQL_WHERE . self::PK_CODEJERCICIO . $this->var2str($cod) . ";");
         if ($data) {
             return new ejercicio($data[0]);
         }
@@ -242,7 +246,7 @@ class ejercicio extends fs_model
             $eje->codejercicio = $eje->get_new_codigo(Date('Y', strtotime($fecha)));
             $eje->nombre = Date('Y', strtotime($fecha));
             $eje->fechainicio = Date('1-1-Y', strtotime($fecha));
-            $eje->fechafin = Date('31-12-Y', strtotime($fecha));
+            $eje->fechafin = Date(self::YEAR_END_FORMAT, strtotime($fecha));
 
             if (strtotime($fecha) < 1) {
                 $this->new_error_msg("Fecha no válida: " . $fecha);
@@ -265,7 +269,7 @@ class ejercicio extends fs_model
         }
 
         return $this->db->select(self::SQL_SELECT_ALL_FROM . $this->table_name
-            . self::SQL_WHERE . "codejercicio = " . $this->var2str($this->codejercicio) . ";");
+            . self::SQL_WHERE . self::PK_CODEJERCICIO . $this->var2str($this->codejercicio) . ";");
     }
 
     /**
@@ -306,7 +310,7 @@ class ejercicio extends fs_model
         /// comprobamos la suma de las subcuentas
         if ($this->db->table_exists('co_subcuentas')) {
             $sql = "SELECT SUM(debe) as debe, SUM(haber) as haber FROM co_subcuentas"
-                . " WHERE codejercicio = " . $this->var2str($this->codejercicio) . ";";
+                . self::SQL_WHERE . self::PK_CODEJERCICIO . $this->var2str($this->codejercicio) . ";";
 
             $data = $this->db->select($sql);
             if ($data) {
@@ -315,7 +319,7 @@ class ejercicio extends fs_model
 
                 if (!$this->floatcmp($debe, $haber, FS_NF0, TRUE)) {
                     $this->new_error_msg('El ejercicio está descuadrado a nivel de subcuentas.'
-                        . ' Debe: ' . $debe . ' | Haber: ' . $haber);
+                        . self::LABEL_DEBE . $debe . self::LABEL_HABER . $haber);
                     $status = FALSE;
                 }
             }
@@ -325,7 +329,7 @@ class ejercicio extends fs_model
         if ($this->db->table_exists('co_partidas')) {
             $sql = "SELECT SUM(debe) as debe, SUM(haber) as haber FROM co_partidas"
                 . " WHERE idasiento IN (SELECT idasiento FROM co_asientos"
-                . " WHERE codejercicio = " . $this->var2str($this->codejercicio) . ");";
+                . self::SQL_WHERE . self::PK_CODEJERCICIO . $this->var2str($this->codejercicio) . ");";
 
             $data = $this->db->select($sql);
             if ($data) {
@@ -334,11 +338,11 @@ class ejercicio extends fs_model
 
                 if (!$this->floatcmp($debe, $haber, FS_NF0, TRUE)) {
                     $this->new_error_msg('El ejercicio está descuadrado a nivel de asientos.'
-                        . ' Debe: ' . $debe . ' | Haber: ' . $haber);
+                        . self::LABEL_DEBE . $debe . self::LABEL_HABER . $haber);
                     $status = FALSE;
                 } else if (!$status) {
                     $this->new_error_msg('Pero <b>NO</b> está descuadrado a nivel de asientos.'
-                        . ' Debe: ' . $debe . ' | Haber: ' . $haber);
+                        . self::LABEL_DEBE . $debe . self::LABEL_HABER . $haber);
                 }
             }
         }
@@ -365,7 +369,7 @@ class ejercicio extends fs_model
                     . ", idasientoapertura = " . $this->var2str($this->idasientoapertura)
                     . ", idasientopyg = " . $this->var2str($this->idasientopyg)
                     . ", idasientocierre = " . $this->var2str($this->idasientocierre)
-                    . "  WHERE codejercicio = " . $this->var2str($this->codejercicio) . ";";
+                    . "  WHERE " . self::PK_CODEJERCICIO . $this->var2str($this->codejercicio) . ";";
             } else {
                 $sql = "INSERT INTO " . $this->table_name . " (codejercicio,nombre,fechainicio,fechafin,
                estado,longsubcuenta,plancontable,idasientoapertura,idasientopyg,idasientocierre)
@@ -394,7 +398,7 @@ class ejercicio extends fs_model
     public function delete()
     {
         $this->clean_cache();
-        return $this->db->exec("DELETE FROM " . $this->table_name . " WHERE codejercicio = " . $this->var2str($this->codejercicio) . ";");
+        return $this->db->exec("DELETE FROM " . $this->table_name . self::SQL_WHERE . self::PK_CODEJERCICIO . $this->var2str($this->codejercicio) . ";");
     }
 
     /**

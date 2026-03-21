@@ -110,7 +110,7 @@ class serie extends fs_model
      */
     public function is_default()
     {
-        return ( $this->codserie == $this->default_items->codserie() );
+        return $this->codserie == $this->default_items->codserie();
     }
 
     public function get($cod)
