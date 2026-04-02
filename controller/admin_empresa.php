@@ -239,7 +239,7 @@ class admin_empresa extends fs_controller
      */
     protected function save_codalmacen($cod)
     {
-        setcookie('default_almacen', $cod, time() + FS_COOKIES_EXPIRE);
+        $this->setPreferenceCookie('default_almacen', $cod);
         $this->default_items->set_codalmacen($cod);
     }
 
@@ -249,7 +249,7 @@ class admin_empresa extends fs_controller
      */
     protected function save_codimpuesto($cod)
     {
-        setcookie('default_impuesto', $cod, time() + FS_COOKIES_EXPIRE);
+        $this->setPreferenceCookie('default_impuesto', $cod);
         $this->default_items->set_codimpuesto($cod);
     }
 
@@ -259,7 +259,7 @@ class admin_empresa extends fs_controller
      */
     protected function save_codpago($cod)
     {
-        setcookie('default_formapago', $cod, time() + FS_COOKIES_EXPIRE);
+        $this->setPreferenceCookie('default_formapago', $cod);
         $this->default_items->set_codpago($cod);
     }
 
