@@ -21,7 +21,7 @@ if (!class_exists('fs_divisa_tools', false) && file_exists(__DIR__ . '/../extras
     require_once __DIR__ . '/../extras/fs_divisa_tools.php';
 }
 
-require_once 'base/fs_default_items.php';
+require_once dirname(__DIR__, 3) . '/base/fs_default_items.php';
 
 /**
  * Controlador de admin -> empresa.

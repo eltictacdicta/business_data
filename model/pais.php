@@ -19,4 +19,4 @@
  */
 
 // Proxy: la implementación real está en catalogo_core
-require_once 'plugins/catalogo_core/model/core/pais.php';
+require_once dirname(__DIR__, 2) . '/catalogo_core/model/core/pais.php';
