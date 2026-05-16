@@ -104,17 +104,6 @@ class admin_empresa extends fs_controller
                 $this->empresa->nombrecorto = '';
                 $this->empresa->web = '';
                 $this->empresa->email = '';
-                $this->empresa->email_config = array(
-                    'mail_mailer' => 'smtp',
-                    'mail_host' => '',
-                    'mail_port' => 587,
-                    'mail_user' => '',
-                    'mail_password' => '',
-                    'mail_enc' => 'tls',
-                    'mail_low_security' => false,
-                    'mail_bcc' => '',
-                    'mail_firma' => ''
-                );
             }
         }
     }
@@ -286,6 +275,10 @@ class admin_empresa extends fs_controller
         $this->applyEmailConfig();
 
         if ($this->empresa->save()) {
+            // Persist email config to MailService so newly submitted values
+            // are available immediately (mail_test() delegates to MailService)
+            (new \FSFramework\Core\MailService())->saveConfig($this->empresa->email_config);
+            \FSFramework\Core\MailService::clearCache();
             $this->save_codalmacen(filter_input(INPUT_POST, 'codalmacen'));
             $this->save_codpago(filter_input(INPUT_POST, 'codpago'));
             $this->new_message('Datos guardados correctamente.');

@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-use PHPMailer\PHPMailer\PHPMailer;
+use FSFramework\Core\MailService;
 
 /**
  * Esta clase almacena los principales datos de la empresa.
@@ -113,17 +113,7 @@ class empresa extends fs_model
         $this->recequivalencia = isset($data['recequivalencia']) ? $this->str2bool($data['recequivalencia']) : FALSE;
         $this->stockpedidos = isset($data['stockpedidos']) ? $this->str2bool($data['stockpedidos']) : FALSE;
 
-        $this->email_config = [
-            'mail_mailer' => 'smtp',
-            'mail_host' => '',
-            'mail_port' => 587,
-            'mail_user' => '',
-            'mail_password' => '',
-            'mail_enc' => 'tls',
-            'mail_low_security' => false,
-            'mail_bcc' => '',
-            'mail_firma' => '',
-        ];
+        $this->email_config = (new MailService())->getConfig();
     }
 
     protected function install()
@@ -450,7 +440,7 @@ class empresa extends fs_model
      */
     public function can_send_mail()
     {
-        return isset($this->email_config['mail_host']) && !empty($this->email_config['mail_host']);
+        return (new MailService())->canSendMail();
     }
 
     /**
@@ -459,33 +449,8 @@ class empresa extends fs_model
      */
     public function new_mail()
     {
-        $mail = new PHPMailer();
-        $mail->CharSet = 'UTF-8';
-        $mail->WordWrap = 50;
-        $mail->Mailer = isset($this->email_config['mail_mailer']) ? $this->email_config['mail_mailer'] : 'smtp';
-        $mail->SMTPAuth = true;
-        $mail->Host = isset($this->email_config['mail_host']) ? $this->email_config['mail_host'] : '';
-        $mail->Username = isset($this->email_config['mail_user']) ? $this->email_config['mail_user'] : '';
-        $mail->Password = isset($this->email_config['mail_password']) ? $this->email_config['mail_password'] : '';
-        $mail->Port = isset($this->email_config['mail_port']) ? $this->email_config['mail_port'] : 587;
-        $mail->From = $this->email;
-        $mail->FromName = $this->nombre;
-
-        if (isset($this->email_config['mail_enc']) && $this->email_config['mail_enc'] != '') {
-            $mail->SMTPSecure = $this->email_config['mail_enc'];
-        }
-
-        if (isset($this->email_config['mail_low_security']) && $this->email_config['mail_low_security']) {
-            $mail->SMTPOptions = array(
-                'ssl' => array(
-                    'verify_peer' => false,
-                    'verify_peer_name' => false,
-                    'allow_self_signed' => true
-                )
-            );
-        }
-
-        return $mail;
+        $mailService = new MailService();
+        return $mailService->createMailer($this->email, $this->nombre);
     }
 
     /**
@@ -495,12 +460,7 @@ class empresa extends fs_model
      */
     public function mail_connect($mail)
     {
-        try {
-            $mail->SMTPConnect();
-            return true;
-        } catch (\Exception $e) {
-            return false;
-        }
+        return (new MailService())->testConnection()['success'];
     }
 
     /**
@@ -545,17 +505,6 @@ class empresa extends fs_model
         $this->recequivalencia = FALSE;
         $this->stockpedidos = FALSE;
 
-        // Inicializar configuración de email
-        $this->email_config = array(
-            'mail_mailer' => 'smtp',
-            'mail_host' => '',
-            'mail_port' => 587,
-            'mail_user' => '',
-            'mail_password' => '',
-            'mail_enc' => 'tls',
-            'mail_low_security' => false,
-            'mail_bcc' => '',
-            'mail_firma' => ''
-        );
+        $this->email_config = [];
     }
 }
