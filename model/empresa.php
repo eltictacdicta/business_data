@@ -17,6 +17,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+use PHPMailer\PHPMailer\PHPMailer;
+
 /**
  * Esta clase almacena los principales datos de la empresa.
  * Clase sin namespace para compatibilidad con facturacion_base.
@@ -452,11 +455,11 @@ class empresa extends fs_model
 
     /**
      * Crea una nueva instancia de PHPMailer configurada
-     * @return \PHPMailer
+     * @return PHPMailer
      */
     public function new_mail()
     {
-        $mail = new \PHPMailer();
+        $mail = new PHPMailer();
         $mail->CharSet = 'UTF-8';
         $mail->WordWrap = 50;
         $mail->Mailer = isset($this->email_config['mail_mailer']) ? $this->email_config['mail_mailer'] : 'smtp';
@@ -487,7 +490,7 @@ class empresa extends fs_model
 
     /**
      * Conecta con el servidor de email
-     * @param \PHPMailer $mail
+     * @param PHPMailer $mail
      * @return boolean
      */
     public function mail_connect($mail)
