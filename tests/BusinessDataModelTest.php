@@ -71,6 +71,14 @@ class BusinessDataModelTest extends TestCase
         $this->assertIsObject($model);
     }
 
+    public function testEmpresaMailConnectRejectsUnsupportedMailerObjects(): void
+    {
+        $model = new \empresa(false);
+
+        $this->expectException(\TypeError::class);
+        $model->mail_connect(new \stdClass());
+    }
+
     public function testEjercicioHydratesFromArray(): void
     {
         $model = new \ejercicio([

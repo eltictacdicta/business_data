@@ -19,6 +19,8 @@
  */
 
 use FSFramework\Core\MailService;
+use FSFramework\DependencyInjection\Container;
+use PHPMailer\PHPMailer\PHPMailer;
 
 /**
  * Esta clase almacena los principales datos de la empresa.
@@ -30,6 +32,8 @@ class empresa extends fs_model
 {
     private const SQL_SELECT_ALL_FROM = 'SELECT * FROM ';
     private const SQL_WHERE = ' WHERE ';
+
+    private ?MailService $mailService = null;
 
     public $id;
     public $xid;
@@ -113,7 +117,7 @@ class empresa extends fs_model
         $this->recequivalencia = isset($data['recequivalencia']) ? $this->str2bool($data['recequivalencia']) : FALSE;
         $this->stockpedidos = isset($data['stockpedidos']) ? $this->str2bool($data['stockpedidos']) : FALSE;
 
-        $this->email_config = (new MailService())->getConfig();
+        $this->email_config = $this->getMailService()->getConfig();
     }
 
     protected function install()
@@ -440,7 +444,7 @@ class empresa extends fs_model
      */
     public function can_send_mail()
     {
-        return (new MailService())->canSendMail();
+        return $this->getMailService()->canSendMail();
     }
 
     /**
@@ -449,8 +453,7 @@ class empresa extends fs_model
      */
     public function new_mail()
     {
-        $mailService = new MailService();
-        return $mailService->createMailer($this->email, $this->nombre);
+        return $this->getMailService()->createMailer($this->email, $this->nombre);
     }
 
     /**
@@ -458,9 +461,9 @@ class empresa extends fs_model
      * @param PHPMailer $mail
      * @return boolean
      */
-    public function mail_connect($mail)
+    public function mail_connect(PHPMailer $mail): bool
     {
-        return (new MailService())->testConnection()['success'];
+        return $this->getMailService()->testConnection($mail)['success'];
     }
 
     /**
@@ -506,5 +509,16 @@ class empresa extends fs_model
         $this->stockpedidos = FALSE;
 
         $this->email_config = [];
+    }
+
+    private function getMailService(): MailService
+    {
+        if ($this->mailService === null) {
+            /** @var MailService $service */
+            $service = Container::get(MailService::class);
+            $this->mailService = $service;
+        }
+
+        return $this->mailService;
     }
 }
