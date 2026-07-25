@@ -23,11 +23,6 @@
                   <span class="glyphicon glyphicon-dashboard"></span> &nbsp; Datos generales
                </a>
             </li>
-            <li id="b_email">
-               <a href="#email" onclick="mostrar_seccion('email');">
-                  <span class="glyphicon glyphicon-envelope"></span> &nbsp; Email
-               </a>
-            </li>
             <li id="b_facturacion">
                <a href="#facturacion" onclick="mostrar_seccion('facturacion');">
                   <span class="glyphicon glyphicon-usd"></span> &nbsp; Facturación
@@ -179,9 +174,6 @@
                   </button>
                </div>
             </div>
-            <div id="panel_email">
-               {% include 'block/admin_empresa_email.html.twig' %}
-            </div>
             <div class="panel panel-primary" id="panel_facturacion">
                {% include 'block/admin_empresa_facturacion.html.twig' %}
             </div>
@@ -292,9 +284,7 @@
 
 <script type="text/javascript">
    function comprobar_url() {
-      if (window.location.hash.substring(1) == 'email') {
-         mostrar_seccion('email');
-      } else if (window.location.hash.substring(1) == 'facturacion') {
+      if (window.location.hash.substring(1) == 'facturacion') {
          mostrar_seccion('facturacion');
       } else if (window.location.hash.substring(1) == 'cuentasb') {
          mostrar_seccion('cuentasb');
@@ -308,22 +298,16 @@
    }
    function mostrar_seccion(id) {
       $("#panel_generales").hide();
-      $("#panel_email").hide();
       $("#panel_facturacion").hide();
       $("#panel_cuentasb").hide();
       $("#panel_impresion").hide();
       $("#panel_traducciones").hide();
       $("#b_generales").removeClass('active');
-      $("#b_email").removeClass('active');
       $("#b_facturacion").removeClass('active');
       $("#b_cuentasb").removeClass('active');
       $("#b_impresion").removeClass('active');
       $("#b_traducciones").removeClass('active');
-      if (id == 'email') {
-         $("#panel_email").show();
-         $("#b_email").addClass('active');
-         document.f_empresa.email.focus();
-      } else if (id == 'facturacion') {
+      if (id == 'facturacion') {
          $("#panel_facturacion").show();
          $("#b_facturacion").addClass('active');
          document.f_empresa.coddivisa.focus();

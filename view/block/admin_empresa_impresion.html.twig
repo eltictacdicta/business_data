@@ -39,6 +39,24 @@
             mostrar forma de pago en las facturas.
         </label>
     </div>
+
+    {% if fsc.pdf_settings is not null %}
+    <hr/>
+    <h4><span class="glyphicon glyphicon-print"></span> {{ trans('factura-pdf1.group.print-options') }}</h4>
+    <div class="row">
+        <div class="col-sm-4">
+            <div class="form-group">
+                <label for="disposicion_cabecera">{{ trans('factura-pdf1.setting.disposicion-cabecera') }}</label>
+                <select class="form-control" id="disposicion_cabecera" name="disposicion_cabecera">
+                    <option value="1" {% if fsc.pdf_settings.disposicion_cabecera|default(1) == 1 %}selected{% endif %}>{{ trans('factura-pdf1.disposicion.logo-empresa-cliente') }}</option>
+                    <option value="2" {% if fsc.pdf_settings.disposicion_cabecera|default(1) == 2 %}selected{% endif %}>{{ trans('factura-pdf1.disposicion.logo-cliente-empresa') }}</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <hr/>
     <div class="form-group">
         Pie de página de la factura:
         <textarea name="pie_factura" rows="3" class="form-control">{{ fsc.empresa.pie_factura }}</textarea>

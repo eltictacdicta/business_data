@@ -30,7 +30,6 @@ require_once dirname(__DIR__, 3) . '/base/fs_default_items.php';
 class admin_empresa extends fs_controller
 {
 
-    private const DEFAULT_MAIL_BODY = "Buenos días, le adjunto su #DOCUMENTO#.\n#FIRMA#";
     private const LOGO_PNG_PATH = 'images/logo.png';
     private const LOGO_JPG_PATH = 'images/logo.jpg';
 
@@ -54,11 +53,6 @@ class admin_empresa extends fs_controller
     public $default_items;
 
     /**
-     * @var array
-     */
-    public $email_plantillas = array();
-
-    /**
      * @var string
      */
     public $logo = '';
@@ -68,6 +62,12 @@ class admin_empresa extends fs_controller
      * @var array
      */
     public $traducciones = array();
+
+    /**
+     * Settings loaded from factura_pdf1 plugin (if active).
+     * @var array<string, mixed>|null
+     */
+    public $pdf_settings = null;
 
     public function __construct()
     {
@@ -146,6 +146,7 @@ class admin_empresa extends fs_controller
         $fsvar = new fs_var();
         $this->loadConfigDefaults($fsvar);
         $this->loadTraducciones();
+        $this->loadPdfPluginSettings();
         $this->initializeDivisaTools();
 
         $this->dispatchAction($fsvar);
@@ -177,14 +178,6 @@ class admin_empresa extends fs_controller
             'print_formapago' => '1'
         );
         $this->impresion = $fsvar->array_get($this->impresion, FALSE);
-
-        $this->email_plantillas = array(
-            'mail_factura' => self::DEFAULT_MAIL_BODY,
-            'mail_albaran' => self::DEFAULT_MAIL_BODY,
-            'mail_pedido' => self::DEFAULT_MAIL_BODY,
-            'mail_presupuesto' => self::DEFAULT_MAIL_BODY,
-        );
-        $this->email_plantillas = $fsvar->array_get($this->email_plantillas, FALSE);
     }
 
     private function loadTraducciones(): void
@@ -272,26 +265,18 @@ class admin_empresa extends fs_controller
     private function handleEmpresaSave($fsvar): void
     {
         $this->applyEmpresaFields();
-        $this->applyEmailConfig();
 
         if ($this->empresa->save()) {
-            $mailService = \FSFramework\DependencyInjection\Container::get(\FSFramework\Core\MailService::class);
-
-            // Persist email config to MailService so newly submitted values
-            // are available immediately (mail_test() delegates to MailService)
-            $mailService->saveConfig($this->empresa->email_config);
-            $mailService->clearCache();
             $this->save_codalmacen(filter_input(INPUT_POST, 'codalmacen'));
             $this->save_codpago(filter_input(INPUT_POST, 'codpago'));
             $this->new_message('Datos guardados correctamente.');
-            $this->mail_test();
             $this->initialize_default_items();
         } else {
             $this->new_error_msg('Error al guardar los datos.');
         }
 
         $this->savePrintConfig($fsvar);
-        $this->saveEmailTemplates($fsvar);
+        $this->savePdfPluginSettings();
         $this->save_traducciones();
     }
 
@@ -314,19 +299,6 @@ class admin_empresa extends fs_controller
         $this->empresa->recequivalencia = (bool) filter_input(INPUT_POST, 'recequivalencia');
     }
 
-    private function applyEmailConfig(): void
-    {
-        $this->empresa->email_config['mail_password'] = filter_input(INPUT_POST, 'mail_password');
-        $this->empresa->email_config['mail_bcc'] = filter_input(INPUT_POST, 'mail_bcc');
-        $this->empresa->email_config['mail_firma'] = filter_input(INPUT_POST, 'mail_firma');
-        $this->empresa->email_config['mail_mailer'] = filter_input(INPUT_POST, 'mail_mailer');
-        $this->empresa->email_config['mail_host'] = filter_input(INPUT_POST, 'mail_host');
-        $this->empresa->email_config['mail_port'] = intval(filter_input(INPUT_POST, 'mail_port'));
-        $this->empresa->email_config['mail_enc'] = strtolower(filter_input(INPUT_POST, 'mail_enc'));
-        $this->empresa->email_config['mail_user'] = filter_input(INPUT_POST, 'mail_user');
-        $this->empresa->email_config['mail_low_security'] = (bool) filter_input(INPUT_POST, 'mail_low_security');
-    }
-
     private function savePrintConfig($fsvar): void
     {
         $this->impresion['print_ref'] = (filter_input(INPUT_POST, 'print_ref') ? 1 : 0);
@@ -334,17 +306,6 @@ class admin_empresa extends fs_controller
         $this->impresion['print_alb'] = (filter_input(INPUT_POST, 'print_alb') ? 1 : 0);
         $this->impresion['print_formapago'] = (filter_input(INPUT_POST, 'print_formapago') ? 1 : 0);
         $fsvar->array_save($this->impresion);
-    }
-
-    private function saveEmailTemplates($fsvar): void
-    {
-        $this->email_plantillas['mail_factura'] = filter_input(INPUT_POST, 'mail_factura');
-        $this->email_plantillas['mail_albaran'] = filter_input(INPUT_POST, 'mail_albaran');
-        if (filter_input(INPUT_POST, 'mail_pedido')) {
-            $this->email_plantillas['mail_pedido'] = filter_input(INPUT_POST, 'mail_pedido');
-            $this->email_plantillas['mail_presupuesto'] = filter_input(INPUT_POST, 'mail_presupuesto');
-        }
-        $fsvar->array_save($this->email_plantillas);
     }
 
     private function handleDeleteCuenta(): void
@@ -377,44 +338,6 @@ class admin_empresa extends fs_controller
         } else {
             $this->new_error_msg('Imposible guardar la cuenta bancaria.');
         }
-    }
-
-    private function mail_test()
-    {
-        if (!isset($this->empresa) || !$this->empresa || false === $this->empresa->can_send_mail()) {
-            return;
-        }
-
-        /// Es imprescindible OpenSSL para enviar emails con los principales proveedores
-        if (false === extension_loaded('openssl')) {
-            $this->new_error_msg('No se encuentra la extensión OpenSSL, imprescindible para enviar emails.');
-            return;
-        }
-
-        $mail = $this->empresa->new_mail();
-        $mail->Timeout = 3;
-        $mail->FromName = $this->user->nick;
-        $mail->Subject = 'TEST';
-        $mail->AltBody = 'TEST';
-        $mail->msgHTML('TEST');
-        $mail->isHTML(TRUE);
-
-        if ($this->empresa->mail_connect($mail)) {
-            /// OK
-            return;
-        }
-
-        $this->new_error_msg('No se ha podido conectar por email. ¿La contraseña es correcta?');
-        if ($mail->Host == 'smtp.gmail.com') {
-            $this->new_error_msg('Aunque la contraseña de gmail sea correcta, en ciertas '
-                . 'situaciones los servidores de gmail bloquean la conexión. '
-                . 'Para superar esta situación debes crear y usar una '
-                . '<a href="https://support.google.com/accounts/answer/185833?hl=es" '
-                . 'target="_blank">contraseña de aplicación</a>');
-            return;
-        }
-
-        $this->new_error_msg("¿<a href='" . FS_COMMUNITY_URL . "/contacto' target='_blank'>Necesitas ayuda</a>?");
     }
 
     private function fix_logo()
@@ -469,24 +392,6 @@ class admin_empresa extends fs_controller
         }
     }
 
-    public function encriptaciones()
-    {
-        return array(
-            'ssl' => 'SSL',
-            'tls' => 'TLS',
-            '' => 'Ninguna'
-        );
-    }
-
-    public function mailers()
-    {
-        return array(
-            'mail' => 'Mail',
-            'sendmail' => 'SendMail',
-            'smtp' => 'SMTP'
-        );
-    }
-
     /**
      * Limpia la caché de la empresa
      */
@@ -495,34 +400,6 @@ class admin_empresa extends fs_controller
         if (isset($this->empresa)) {
             $this->empresa->clean_cache();
         }
-    }
-
-    /**
-     * Comprueba si la empresa puede enviar correos electrónicos
-     * @return boolean
-     */
-    public function can_send_mail()
-    {
-        return $this->empresa->can_send_mail();
-    }
-
-    /**
-     * Crea un nuevo objeto de correo configurado con los datos de la empresa
-     * @return \PHPMailer
-     */
-    public function new_mail()
-    {
-        return $this->empresa->new_mail();
-    }
-
-    /**
-     * Conecta el objeto mail con los datos de la empresa
-     * @param \PHPMailer $mail
-     * @return boolean
-     */
-    public function mail_connect(\PHPMailer\PHPMailer\PHPMailer $mail)
-    {
-        return $this->empresa->mail_connect($mail);
     }
 
     /**
@@ -554,6 +431,39 @@ class admin_empresa extends fs_controller
 
         header('Content-Type: application/json');
         echo json_encode(array('query' => $aux, 'suggestions' => $json));
+    }
+
+    /**
+     * Load factura_pdf1 settings when the plugin is active.
+     */
+    private function loadPdfPluginSettings(): void
+    {
+        if (!class_exists(\FSFramework\Plugins\factura_pdf1\Services\SettingsService::class, true)) {
+            return;
+        }
+
+        $service = new \FSFramework\Plugins\factura_pdf1\Services\SettingsService();
+        $this->pdf_settings = $service->load();
+    }
+
+    /**
+     * Save factura_pdf1 settings submitted from the print section.
+     */
+    private function savePdfPluginSettings(): void
+    {
+        if ($this->pdf_settings === null) {
+            return;
+        }
+        if (!class_exists(\FSFramework\Plugins\factura_pdf1\Services\SettingsService::class, true)) {
+            return;
+        }
+
+        $disposicion = filter_input(INPUT_POST, 'disposicion_cabecera', FILTER_VALIDATE_INT);
+        if ($disposicion !== null && $disposicion !== false) {
+            $this->pdf_settings['disposicion_cabecera'] = $disposicion;
+            $service = new \FSFramework\Plugins\factura_pdf1\Services\SettingsService();
+            $service->save($this->pdf_settings);
+        }
     }
 
     /**
