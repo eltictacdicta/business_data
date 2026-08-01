@@ -434,11 +434,20 @@ class admin_empresa extends fs_controller
     }
 
     /**
+     * Check whether the factura_pdf1 plugin is both loaded and active.
+     */
+    private function isPdfPluginActive(): bool
+    {
+        return in_array('factura_pdf1', $GLOBALS['plugins'] ?? [], true)
+            && class_exists(\FSFramework\Plugins\factura_pdf1\Services\SettingsService::class, true);
+    }
+
+    /**
      * Load factura_pdf1 settings when the plugin is active.
      */
     private function loadPdfPluginSettings(): void
     {
-        if (!class_exists(\FSFramework\Plugins\factura_pdf1\Services\SettingsService::class, true)) {
+        if (!$this->isPdfPluginActive()) {
             return;
         }
 
@@ -454,7 +463,7 @@ class admin_empresa extends fs_controller
         if ($this->pdf_settings === null) {
             return;
         }
-        if (!class_exists(\FSFramework\Plugins\factura_pdf1\Services\SettingsService::class, true)) {
+        if (!$this->isPdfPluginActive()) {
             return;
         }
 
