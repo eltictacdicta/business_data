@@ -1,6 +1,0 @@
-# vendor/ se versiona a propósito (política FSFramework): cada plugin/el núcleo
-# commitea su vendor para despliegues/actualizaciones sin composer install.
-
-# Scratch de planificación interna del desarrollo — no se publica.
-/.planning/
-

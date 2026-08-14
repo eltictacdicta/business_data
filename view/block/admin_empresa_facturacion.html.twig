@@ -4,6 +4,7 @@
 <div class="panel-body">
     <div class="row">
         <div class="col-sm-4">
+            {% if fsc.catalog_available %}
             <a href="{{ fsc.divisa.url() }}">Divisa</a>:
             <select name="coddivisa" class="form-control">
                 {% for divisa in fsc.divisa.all() %}
@@ -14,6 +15,13 @@
                 {% endif %}
                 {% endfor %}
             </select>
+            {% else %}
+            Divisa:
+            <input class="form-control" type="text" name="coddivisa"
+                value="{{ fsc.empresa.coddivisa|default('EUR') }}" maxlength="3" autocomplete="off"
+                placeholder="EUR" />
+            <p class="help-block">Activa <code>catalogo_core</code> para conversión y catálogo de divisas.</p>
+            {% endif %}
             <p class="help-block">
                 <a href="index.php?page=admin_home#avanzado">Cambiar el formato</a>.
             </p>
@@ -81,6 +89,7 @@
             </select>
         </div>
         <div class="col-sm-3">
+            {% if fsc.catalog_available %}
             <a href="{{ fsc.almacen.url() }}">Almacén</a>:
             <select name="codalmacen" class="form-control">
                 {% for almacen in fsc.almacen.all() %}
@@ -91,6 +100,13 @@
                 {% endif %}
                 {% endfor %}
             </select>
+            {% else %}
+            Almacén:
+            <input class="form-control" type="text" name="codalmacen"
+                value="{{ fsc.empresa.codalmacen }}" maxlength="4" autocomplete="off"
+                placeholder="ALG" />
+            <p class="help-block">Activa <code>catalogo_core</code> para gestionar almacenes.</p>
+            {% endif %}
         </div>
     </div>
 </div>

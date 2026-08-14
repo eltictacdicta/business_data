@@ -42,7 +42,14 @@ class cuenta_banco extends fs_model
     {
         parent::__construct('cuentasbanco');
         if ($data) {
-            $this->loadFromData($data);
+            $this->codcuenta = $data['codcuenta'] ?? null;
+            $this->descripcion = $data['descripcion'] ?? '';
+            $this->iban = $data['iban'] ?? '';
+            $this->swift = $data['swift'] ?? '';
+            $this->entidad = $data['entidad'] ?? '';
+            $this->oficina = $data['oficina'] ?? '';
+            $this->dc = $data['dc'] ?? '';
+            $this->cuenta = $data['cuenta'] ?? '';
         } else {
             $this->clear();
         }
@@ -88,7 +95,8 @@ class cuenta_banco extends fs_model
         $this->iban = $this->no_html($this->iban);
         $this->swift = $this->no_html($this->swift);
 
-        if (!preg_match("/^[A-Z0-9]{1,6}$/i", $this->codcuenta)) {
+        $codcuenta = (string) ($this->codcuenta ?? '');
+        if ($codcuenta === '' || !preg_match('/^[A-Z0-9]{1,6}$/i', $codcuenta)) {
             $this->new_error_msg("Código de cuenta bancaria no válido.");
             return FALSE;
         }
@@ -98,6 +106,10 @@ class cuenta_banco extends fs_model
 
     public function save()
     {
+        if (!$this->exists() && ($this->codcuenta === null || $this->codcuenta === '')) {
+            $this->codcuenta = $this->get_new_codigo();
+        }
+
         if ($this->test()) {
             if ($this->exists()) {
                 $sql = "UPDATE " . $this->table_name . " SET descripcion = " . $this->var2str($this->descripcion) .
@@ -157,6 +169,17 @@ class cuenta_banco extends fs_model
         // Si en el futuro necesitas filtrar por empresa específica, 
         // puedes modificar esta consulta
         return $this->all();
+    }
+
+    private function get_new_codigo()
+    {
+        $sql = 'SELECT MAX(' . $this->db->sql_to_int('codcuenta') . ') as cod FROM ' . $this->table_name . ';';
+        $data = $this->db->select($sql);
+        if ($data) {
+            return (string) (1 + intval($data[0]['cod']));
+        }
+
+        return '1';
     }
 
     private function clear()

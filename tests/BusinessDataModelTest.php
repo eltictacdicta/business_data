@@ -32,7 +32,6 @@ class BusinessDataModelTest extends TestCase
         require_once FS_FOLDER . '/plugins/business_data/model/empresa.php';
         require_once FS_FOLDER . '/plugins/business_data/model/ejercicio.php';
         require_once FS_FOLDER . '/plugins/business_data/model/serie.php';
-        require_once FS_FOLDER . '/plugins/catalogo_core/model/core/divisa.php';
     }
 
     public function testEmpresaHydratesFromArray(): void
@@ -129,27 +128,5 @@ class BusinessDataModelTest extends TestCase
 
         $this->assertIsObject($model);
         $this->assertNull($model->codserie);
-    }
-
-    public function testDivisaProxyHydratesFromArray(): void
-    {
-        $model = new \divisa([
-            'coddivisa' => 'EUR',
-            'descripcion' => 'Euro',
-            'codiso' => 'EUR',
-            'simbolo' => '€',
-            'tasaconv' => '1.0000',
-        ]);
-
-        $this->assertSame('EUR', $model->coddivisa);
-        $this->assertSame('Euro', $model->descripcion);
-        $this->assertSame('€', $model->simbolo);
-    }
-
-    public function testDivisaProxyDefaultState(): void
-    {
-        $model = new \divisa(false);
-
-        $this->assertIsObject($model);
     }
 }

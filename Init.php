@@ -36,11 +36,6 @@ class Init
      */
     private $empresa = null;
 
-    /**
-     * @var array
-     */
-    private $divisas = [];
-
     public function init(): void
     {
         $dispatcher = FSEventDispatcher::getInstance();
@@ -50,6 +45,20 @@ class Init
             $this->registerTwigGlobals($event->getTwig());
             $this->registerTwigFunctions($event->getTwig());
         });
+    }
+
+    /**
+     * Siembra series, formas de pago y empresa por defecto al activar el plugin.
+     * Los modelos con install() se cubren vía fs_model::seed_if_empty() en el core.
+     */
+    public static function upgrade(): void
+    {
+        try {
+            require_once __DIR__ . '/functions.php';
+            business_data_check_default_data(new \fs_db2());
+        } catch (\Throwable $e) {
+            error_log('[business_data] Default seed failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -164,26 +173,6 @@ class Init
             $this->empresa = new \stdClass();
             $this->empresa->coddivisa = 'EUR';
         }
-
-        // Load divisas
-        $this->loadDivisas();
-    }
-
-    /**
-     * Load all divisas from database
-     */
-    private function loadDivisas(): void
-    {
-        if (!empty($this->divisas)) {
-            return;
-        }
-
-        if (class_exists('divisa')) {
-            $divisaModel = new \divisa();
-            $this->divisas = $divisaModel->all();
-        } else {
-            $this->divisas = [];
-        }
     }
 
     /**
@@ -200,13 +189,7 @@ class Init
             $coddivisa = $this->empresa->coddivisa ?? 'EUR';
         }
 
-        foreach ($this->divisas as $divisa) {
-            if ($divisa->coddivisa == $coddivisa) {
-                return $divisa->simbolo;
-            }
-        }
-
-        // Default symbols for common currencies
+        // Símbolos por defecto; conversión y tasas las gestiona catalogo_core (fs_divisa_tools).
         $defaultSymbols = [
             'EUR' => '€',
             'USD' => '$',

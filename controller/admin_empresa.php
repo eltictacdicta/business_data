@@ -17,10 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-if (!class_exists('fs_divisa_tools', false) && file_exists(__DIR__ . '/../extras/fs_divisa_tools.php')) {
-    require_once __DIR__ . '/../extras/fs_divisa_tools.php';
-}
-
 require_once dirname(__DIR__, 3) . '/base/fs_default_items.php';
 
 /**
@@ -32,6 +28,9 @@ class admin_empresa extends fs_controller
 
     private const LOGO_PNG_PATH = 'images/logo.png';
     private const LOGO_JPG_PATH = 'images/logo.jpg';
+
+    /** @var bool True when catalogo_core is active and catalog models are available. */
+    public $catalog_available = false;
 
     public $almacen;
     public $cuenta_banco;
@@ -147,7 +146,6 @@ class admin_empresa extends fs_controller
         $this->loadConfigDefaults($fsvar);
         $this->loadTraducciones();
         $this->loadPdfPluginSettings();
-        $this->initializeDivisaTools();
 
         $this->dispatchAction($fsvar);
         $this->load_logo();
@@ -160,13 +158,25 @@ class admin_empresa extends fs_controller
 
     private function initializeModels(): void
     {
-        $this->almacen = new almacen();
         $this->cuenta_banco = new cuenta_banco();
-        $this->divisa = new divisa();
         $this->ejercicio = new ejercicio();
         $this->forma_pago = new forma_pago();
         $this->serie = new serie();
-        $this->pais = new pais();
+
+        $this->catalog_available = $this->isCatalogAvailable();
+        if ($this->catalog_available) {
+            $this->almacen = new almacen();
+            $this->divisa = new divisa();
+            $this->pais = new pais();
+        }
+    }
+
+    private function isCatalogAvailable(): bool
+    {
+        return in_array('catalogo_core', $GLOBALS['plugins'] ?? [], true)
+            && class_exists('divisa', false)
+            && class_exists('almacen', false)
+            && class_exists('pais', false);
     }
 
     private function loadConfigDefaults($fsvar): void
@@ -207,12 +217,6 @@ class admin_empresa extends fs_controller
             $constant = 'FS_' . $key;
             $this->traducciones[$key] = defined($constant) ? constant($constant) : $default;
         }
-    }
-
-    private function initializeDivisaTools(): void
-    {
-        $coddivisa = ($this->empresa && $this->empresa->coddivisa) ? $this->empresa->coddivisa : 'EUR';
-        $this->divisa_tools = new fs_divisa_tools($coddivisa);
     }
 
     /**

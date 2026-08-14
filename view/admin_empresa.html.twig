@@ -93,6 +93,7 @@
                      </div>
                      <div class="col-sm-2">
                         <div class="form-group">
+                           {% if fsc.catalog_available %}
                            <a href="{{ fsc.pais.url() }}">País</a>:
                            <select name="codpais" class="form-control">
                               {% for pais in fsc.pais.all() %}
@@ -103,6 +104,13 @@
                               {% endif %}
                               {% endfor %}
                            </select>
+                           {% else %}
+                           País:
+                           <input class="form-control" type="text" name="codpais"
+                              value="{{ fsc.empresa.codpais }}" maxlength="20" autocomplete="off"
+                              placeholder="ESP" />
+                           <p class="help-block">Activa <code>catalogo_core</code> para elegir desde el catálogo.</p>
+                           {% endif %}
                         </div>
                      </div>
                      <div class="col-sm-3">

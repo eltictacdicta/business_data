@@ -18,13 +18,9 @@
  */
 
 /**
- * Este archivo se ejecuta automáticamente cuando se activa el plugin.
- * Define funciones para verificar datos por defecto.
- * La verificación se ejecuta desde los controladores que cargan business_data.
- */
-
-/**
- * Verifica e inserta datos por defecto en las tablas básicas del sistema
+ * Verifica e inserta datos por defecto en las tablas propias de business_data.
+ * Catálogo (divisas, almacenes, países) lo siembra catalogo_core al activarse.
+ *
  * @param fs_db2 $db Instancia de la base de datos
  */
 function business_data_check_default_data($db)
@@ -34,13 +30,6 @@ function business_data_check_default_data($db)
         return;
     }
     $checked = true;
-    
-    // Verificar almacenes
-    $data = $db->select("SELECT COUNT(*) as total FROM almacenes;");
-    if ($data && intval($data[0]['total']) == 0) {
-        $db->exec("INSERT INTO almacenes (codalmacen,nombre,poblacion,direccion,codpostal,telefono,fax,contacto) "
-            . "VALUES ('ALG','ALMACEN GENERAL','','','','','','');");
-    }
     
     // Verificar series
     $data = $db->select("SELECT COUNT(*) as total FROM series;");
@@ -57,26 +46,6 @@ function business_data_check_default_data($db)
             . "('TRANS','Transferencia bancaria','Emitidos',NULL,FALSE,'+1month'),"
             . "('TARJETA','Tarjeta de crédito','Pagados',NULL,FALSE,'+0day'),"
             . "('PAYPAL','PayPal','Pagados',NULL,FALSE,'+0day');");
-    }
-    
-    // Verificar divisas
-    $data = $db->select("SELECT COUNT(*) as total FROM divisas;");
-    if ($data && intval($data[0]['total']) == 0) {
-        $db->exec("INSERT INTO divisas (coddivisa,descripcion,tasaconv,tasaconv_compra,codiso,simbolo) VALUES "
-            . "('EUR','EUROS','1','1','978','€'),"
-            . "('USD','DÓLARES EE.UU.','1.129','1.129','840','\$'),"
-            . "('GBP','LIBRAS ESTERLINAS','0.865','0.865','826','£'),"
-            . "('MXN','PESOS (MXN)','23.3678','23.3678','484','MX\$');");
-    }
-    
-    // Verificar países
-    $data = $db->select("SELECT COUNT(*) as total FROM paises;");
-    if ($data && intval($data[0]['total']) == 0) {
-        $db->exec("INSERT INTO paises (codpais,codiso,nombre,bandera,validarprov) VALUES "
-            . "('ESP','ES','España',NULL,TRUE),"
-            . "('MEX','MX','México',NULL,FALSE),"
-            . "('ARG','AR','Argentina',NULL,FALSE),"
-            . "('USA','US','Estados Unidos',NULL,FALSE);");
     }
     
     // Verificar empresa (si no existe, crear una por defecto)

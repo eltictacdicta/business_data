@@ -10,19 +10,25 @@ Repositorio: https://github.com/eltictacdicta/business_data
 - Ejercicios contables (`ejercicio`)
 - Series de documentos (`serie`)
 - Formas de pago (`forma_pago`)
-- Cuentas bancarias (`cuenta_banco`, `cuenta_banco_cliente`)
-- Proxies legacy para `divisa`, `almacen` y `pais` (implementación real en `catalogo_core`)
+- Cuentas bancarias de la empresa (`cuenta_banco`)
+
+Las cuentas bancarias de clientes (`cuenta_banco_cliente`, tabla `cuentasbcocli`) viven en **`clientes_core`** desde la versión 3 del plugin.
+
+Divisas, almacenes y países pertenecen a **`catalogo_core`**. Este plugin no los implementa ni los carga; `admin_empresa` ofrece campos de texto cuando catálogo no está activo.
 
 ## Dependencias
 
 ```ini
-require = "catalogo_core"
+require = ""
 ```
 
-Orden de activación recomendado:
+No requiere otros plugins. Para selects de divisa/almacén/país en empresa y conversión de moneda, activa **`catalogo_core`** (gestiona `fs_divisa_tools`).
+
+Orden de activación recomendado en instalaciones completas:
 
 1. `catalogo_core`
 2. `business_data`
+3. Resto según grafo (`clientes_core`, etc.)
 
 ## Instalación
 

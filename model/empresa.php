@@ -193,6 +193,10 @@ class empresa extends fs_model
                 return $cod;
             }
         }
+
+        if (!$this->isCatalogAvailable()) {
+            return null;
+        }
         
         // Si no hay default, buscar el primer almacén disponible
         $sql = "SELECT codalmacen FROM almacenes ORDER BY codalmacen ASC LIMIT 1;";
@@ -218,6 +222,10 @@ class empresa extends fs_model
                 return $cod;
             }
         }
+
+        if (!$this->isCatalogAvailable()) {
+            return 'EUR';
+        }
         
         // Si no hay default, buscar EUR o la primera divisa disponible
         $sql = "SELECT coddivisa FROM divisas WHERE coddivisa = 'EUR' LIMIT 1;";
@@ -233,6 +241,15 @@ class empresa extends fs_model
         }
         
         return 'EUR';
+    }
+
+    /**
+     * True when catalogo_core is active and catalog models are loadable.
+     */
+    private function isCatalogAvailable(): bool
+    {
+        return in_array('catalogo_core', $GLOBALS['plugins'] ?? [], true)
+            && class_exists('divisa', false);
     }
     
     /**
