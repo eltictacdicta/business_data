@@ -73,6 +73,15 @@ class empresa extends fs_model
      */
     public $email_config;
 
+    /**
+     * Caché de la fila de empresa durante la request. null = sin cargar,
+     * false = no existe, array = fila cargada. Evita SELECTs duplicados
+     * cuando varios componentes piden la empresa en la misma petición.
+     *
+     * @var array<string, mixed>|false|null
+     */
+    private static $empresa_row_cache = null;
+
     public function __construct($data = FALSE)
     {
         parent::__construct('empresa');
@@ -132,18 +141,22 @@ class empresa extends fs_model
 
     public function get($id = NULL)
     {
-        $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . " ORDER BY id ASC;";
-        $data = $this->db->select($sql);
-        if ($data) {
-            $emp = new empresa($data[0]);
-            
-            // Asegurar que los campos de configuración tengan valores válidos
-            $emp->ensure_defaults();
-            
-            return $emp;
-        } else {
+        if (self::$empresa_row_cache === null) {
+            $sql = self::SQL_SELECT_ALL_FROM . $this->table_name . " ORDER BY id ASC;";
+            $data = $this->db->select($sql);
+            self::$empresa_row_cache = $data ? $data[0] : false;
+        }
+
+        if (self::$empresa_row_cache === false) {
             return FALSE;
         }
+
+        $emp = new empresa(self::$empresa_row_cache);
+
+        // Asegurar que los campos de configuración tengan valores válidos
+        $emp->ensure_defaults();
+
+        return $emp;
     }
     
     /**
@@ -373,6 +386,8 @@ class empresa extends fs_model
 
     public function save()
     {
+        self::$empresa_row_cache = null;
+
         if ($this->test()) {
             if ($this->exists()) {
                 $sql = "UPDATE " . $this->table_name . " SET cifnif = " . $this->var2str($this->cifnif) .
@@ -451,6 +466,7 @@ class empresa extends fs_model
 
     public function delete()
     {
+        self::$empresa_row_cache = null;
         $sql = "DELETE FROM " . $this->table_name . " WHERE id = " . $this->var2str($this->id) . ";";
         return $this->db->exec($sql);
     }
