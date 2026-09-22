@@ -18,6 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 require_once dirname(__DIR__, 3) . '/base/fs_default_items.php';
+// Lazy model autoloading is disabled for plugin models in some contexts, so the
+// sede entity is required explicitly (the guarded class_exists keeps this a
+// no-op when it is already loaded).
+if (!class_exists('empresa_sede', false)) {
+    require_once dirname(__DIR__) . '/model/empresa_sede.php';
+}
 
 /**
  * Controlador de admin -> empresa.
@@ -40,6 +46,17 @@ class admin_empresa extends fs_controller
     public $impresion = array();
     public $serie;
     public $pais;
+
+    /**
+     * @var empresa_sede
+     */
+    public $empresa_sede;
+
+    /**
+     * Sedes de la empresa, cargadas para el panel.
+     * @var list<empresa_sede>
+     */
+    public $sedes = array();
 
     /**
      * @var empresa
@@ -148,6 +165,7 @@ class admin_empresa extends fs_controller
         $this->loadPdfPluginSettings();
 
         $this->dispatchAction($fsvar);
+        $this->loadSedes();
         $this->load_logo();
 
         $subcuenta = filter_input(INPUT_GET, 'subcuenta');
@@ -162,6 +180,7 @@ class admin_empresa extends fs_controller
         $this->ejercicio = new ejercicio();
         $this->forma_pago = new forma_pago();
         $this->serie = new serie();
+        $this->empresa_sede = new empresa_sede();
 
         $this->catalog_available = $this->isCatalogAvailable();
         if ($this->catalog_available) {
@@ -249,20 +268,172 @@ class admin_empresa extends fs_controller
         $this->default_items->set_codpago($cod);
     }
 
+    /**
+     * Resuelve qué acción aplica a partir de los arrays de la petición.
+     *
+     * Función pura a propósito: `filter_input()` lee la request real y no se
+     * puede sustituir en PHPUnit, así que el orden de precedencia (el riesgo
+     * más grave de este cambio) se vuelve testeable sin base de datos, sesión
+     * ni SAPI.
+     *
+     * Los marcadores de sede se evalúan ANTES de `nombre`: un formulario de
+     * sede publica un campo `nombre` obligatorio y, sin esta precedencia, la
+     * petición caería en `handleEmpresaSave()` y sobrescribiría la fila de la
+     * empresa base.
+     *
+     * @param array<string, mixed> $post
+     * @param array<string, mixed> $get
+     */
+    public static function resolveAction(array $post, array $get): string
+    {
+        if (self::posted($post, 'save_sede')) {
+            return 'sede_save';
+        }
+
+        if (self::posted($post, 'delete_sede')) {
+            return 'sede_delete';
+        }
+
+        if (self::posted($post, 'nombre')) {
+            return 'empresa';
+        }
+
+        if (self::posted($post, 'logo')) {
+            return 'logo';
+        }
+
+        if (self::posted($get, 'delete_logo')) {
+            return 'delete_logo';
+        }
+
+        // Asimetría heredada, preservada a propósito: el despacho lee
+        // `delete_cuenta` de POST mientras handleDeleteCuenta() lo lee de GET.
+        // No "corregir" aquí.
+        if (self::posted($post, 'delete_cuenta')) {
+            return 'cuenta_delete';
+        }
+
+        if (self::posted($post, 'iban')) {
+            return 'cuenta_save';
+        }
+
+        return 'none';
+    }
+
+    /**
+     * Réplica de la veracidad de `filter_input(INPUT_*, $key)`: `NULL` cuando
+     * la clave no existe y `FALSE` cuando el valor es un array. Mantiene el
+     * comportamiento heredado sin depender de la SAPI real.
+     *
+     * @param array<string, mixed> $values
+     */
+    private static function posted(array $values, string $key): bool
+    {
+        if (!array_key_exists($key, $values) || is_array($values[$key])) {
+            return false;
+        }
+
+        return (bool) $values[$key];
+    }
+
     private function dispatchAction($fsvar): void
     {
-        if (filter_input(INPUT_POST, 'nombre')) {
-            $this->handleEmpresaSave($fsvar);
-        } else if (filter_input(INPUT_POST, 'logo')) {
-            $this->cambiar_logo();
-        } else if (filter_input(INPUT_GET, 'delete_logo')) {
-            $this->delete_logo();
-        } else if (filter_input(INPUT_POST, 'delete_cuenta')) {
-            $this->handleDeleteCuenta();
-        } else if (filter_input(INPUT_POST, 'iban')) {
-            $this->handleSaveCuenta();
+        switch (self::resolveAction($_POST, $_GET)) {
+            case 'sede_save':
+                $this->handleSaveSede();
+                break;
+
+            case 'sede_delete':
+                $this->handleDeleteSede();
+                break;
+
+            case 'empresa':
+                $this->handleEmpresaSave($fsvar);
+                break;
+
+            case 'logo':
+                $this->cambiar_logo();
+                break;
+
+            case 'delete_logo':
+                $this->delete_logo();
+                break;
+
+            case 'cuenta_delete':
+                $this->handleDeleteCuenta();
+                break;
+
+            case 'cuenta_save':
+                $this->handleSaveCuenta();
+                break;
+
+            default:
+                $this->fix_logo();
+                break;
+        }
+    }
+
+    private function loadSedes(): void
+    {
+        $this->sedes = array();
+        if ($this->empresa_sede instanceof empresa_sede) {
+            $this->sedes = $this->empresa_sede->all();
+        }
+    }
+
+    /**
+     * Proyecta un POST a los campos editables de una sede. Se limita a la
+     * lista editable de la entidad para que un formulario de sede nunca pueda
+     * escribir los campos de la empresa base.
+     *
+     * @param array<string, mixed> $post
+     * @return array<string, mixed>
+     */
+    public static function sedeFieldsFromPost(array $post): array
+    {
+        $fields = array();
+        foreach (empresa_sede::EDITABLE_FIELDS as $field) {
+            if (array_key_exists($field, $post)) {
+                $fields[$field] = $post[$field];
+            }
+        }
+
+        return $fields;
+    }
+
+    private function handleSaveSede(): void
+    {
+        $codsede = filter_input(INPUT_POST, 'codsede');
+        $sede = $codsede ? $this->empresa_sede->get($codsede) : new empresa_sede();
+        if (!$sede instanceof empresa_sede) {
+            $this->new_error_msg('Sede no encontrada.');
+            return;
+        }
+
+        foreach (self::sedeFieldsFromPost($_POST) as $field => $value) {
+            $sede->{$field} = $value;
+        }
+
+        if ($sede->save()) {
+            $this->new_message('Sede guardada correctamente.');
         } else {
-            $this->fix_logo();
+            $this->new_error_msg('Imposible guardar la sede.');
+        }
+    }
+
+    private function handleDeleteSede(): void
+    {
+        $codsede = filter_input(INPUT_POST, 'delete_sede');
+        $sede = $codsede ? $this->empresa_sede->get($codsede) : false;
+        if (!$sede instanceof empresa_sede) {
+            $this->new_error_msg('Sede no encontrada.');
+            return;
+        }
+
+        if ($sede->delete()) {
+            $this->new_message('Sede eliminada correctamente.');
+        } else {
+            $this->new_error_msg('Imposible eliminar la sede.');
         }
     }
 

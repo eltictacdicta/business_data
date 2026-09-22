@@ -33,6 +33,11 @@
                   <span class="glyphicon glyphicon-credit-card"></span> &nbsp; Cuentas bancarias
                </a>
             </li>
+            <li id="b_sedes">
+               <a href="#sedes" onclick="mostrar_seccion('sedes');">
+                  <span class="glyphicon glyphicon-map-marker"></span> &nbsp; Sedes
+               </a>
+            </li>
             <li id="b_impresion">
                <a href="#impresion" onclick="mostrar_seccion('impresion');">
                   <span class="glyphicon glyphicon-print"></span> &nbsp; Impresión
@@ -195,6 +200,9 @@
          <div id="panel_cuentasb">
             {% include 'block/admin_empresa_bancos.html.twig' %}
          </div>
+         <div id="panel_sedes">
+            {% include 'block/admin_empresa_sedes.html.twig' %}
+         </div>
       </div>
    </div>
 </div>
@@ -300,6 +308,8 @@
          mostrar_seccion('impresion');
       } else if (window.location.hash.substring(1) == 'traducciones') {
          mostrar_seccion('traducciones');
+      } else if (window.location.hash.substring(1) == 'sedes') {
+         mostrar_seccion('sedes');
       } else {
          mostrar_seccion('');
       }
@@ -308,11 +318,13 @@
       $("#panel_generales").hide();
       $("#panel_facturacion").hide();
       $("#panel_cuentasb").hide();
+      $("#panel_sedes").hide();
       $("#panel_impresion").hide();
       $("#panel_traducciones").hide();
       $("#b_generales").removeClass('active');
       $("#b_facturacion").removeClass('active');
       $("#b_cuentasb").removeClass('active');
+      $("#b_sedes").removeClass('active');
       $("#b_impresion").removeClass('active');
       $("#b_traducciones").removeClass('active');
       if (id == 'facturacion') {
@@ -322,6 +334,9 @@
       } else if (id == 'cuentasb') {
          $("#panel_cuentasb").show();
          $("#b_cuentasb").addClass('active');
+      } else if (id == 'sedes') {
+         $("#panel_sedes").show();
+         $("#b_sedes").addClass('active');
       } else if (id == 'impresion') {
          $("#panel_impresion").show();
          $("#b_impresion").addClass('active');
