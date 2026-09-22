@@ -403,6 +403,16 @@ class admin_empresa extends fs_controller
 
     private function handleSaveSede(): void
     {
+        // Explicit CSRF guard. The page gate (pre_private_core() ->
+        // validateCsrf()) only blocks invalid tokens in strict mode; with
+        // FS_CSRF_SOFT=true it returns TRUE and private_core() still runs. This
+        // check rejects the write in every mode, mirroring the tpvmod_settings
+        // mapping path. The sede form is a POST form carrying csrf_field().
+        if (!$this->isCsrfValid()) {
+            $this->new_error_msg('Token de seguridad inválido.');
+            return;
+        }
+
         $codsede = filter_input(INPUT_POST, 'codsede');
         $sede = $codsede ? $this->empresa_sede->get($codsede) : new empresa_sede();
         if (!$sede instanceof empresa_sede) {
@@ -423,6 +433,19 @@ class admin_empresa extends fs_controller
 
     private function handleDeleteSede(): void
     {
+        // Explicit CSRF guard, same rationale as handleSaveSede().
+        //
+        // Unlike the pre-existing `delete_cuenta` sibling (a GET link with no
+        // token, handled by handleDeleteCuenta()), `delete_sede` is triggered
+        // by a submit button inside the per-sede POST form that carries
+        // {{ csrf_field() }} (view/block/admin_empresa_sedes.html.twig). The
+        // trigger is therefore genuinely token-carrying and this handler can
+        // reject an invalid token directly; no GET link is involved.
+        if (!$this->isCsrfValid()) {
+            $this->new_error_msg('Token de seguridad inválido.');
+            return;
+        }
+
         $codsede = filter_input(INPUT_POST, 'delete_sede');
         $sede = $codsede ? $this->empresa_sede->get($codsede) : false;
         if (!$sede instanceof empresa_sede) {
