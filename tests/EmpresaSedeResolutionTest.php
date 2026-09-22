@@ -317,10 +317,32 @@ final class EmpresaSedeResolutionTest extends TestCase
     }
 
     // =====================================================================
-    // Case 21 — every null case keeps the base identity untouched
+    // Case 21 — every null case: null result, no loader on early returns, base
+    // never replaced nor mutated
     // =====================================================================
 
-    public function testResolveKeepsTheBaseIdentityUntouchedForEveryNullCase(): void
+    /**
+     * Renamed from `testResolveKeepsTheBaseIdentityUntouchedForEveryNullCase`.
+     * That name overstated the coverage: it adopted the base through a local
+     * closure (`$adopt = $sede instanceof \empresa ? $sede : $base`) and then
+     * compared the result with the very same `$base`, so the `assertSame` could
+     * never fail and proved nothing about production code.
+     *
+     * `resolveForDocumentType()` returns `?empresa` and never hands the base
+     * back, so the "same instance" (`assertSame`) identity contract of the print
+     * path can only be proven at the WU-2 seam
+     * (`RelatedModelsLoader::resolveEmpresa()`, factura_pdf1) -- it is NOT
+     * asserted here and must not be faked here.
+     *
+     * What this test does prove with assertions that can actually fail:
+     *  1. every null case returns `null`;
+     *  2. the three short-circuit cases (unknown tipo, absent key, empty key)
+     *     never reach the injected loader (0 calls);
+     *  3. the dangling-code case DOES reach the loader exactly once;
+     *  4. the base instance is neither replaced nor mutated and is never
+     *     saved/deleted/`exists()`-checked.
+     */
+    public function testResolveForDocumentTypeReturnsNullForEveryNullCaseWithoutMutatingTheBase(): void
     {
         $base = $this->makeBase(['nombre' => 'Empresa Base', 'codpais' => 'FRA', 'telefono' => '600999']);
         $identity = spl_object_id($base);
@@ -331,29 +353,31 @@ final class EmpresaSedeResolutionTest extends TestCase
             'id' => $base->id,
         ];
 
-        $loader = static fn (string $cod) => null;
+        $calls = 0;
+        $loader = function (string $cod) use (&$calls) {
+            $calls++;
 
-        // A null result means the caller keeps the very same base instance.
-        $adopt = static fn ($sede) => $sede instanceof \empresa ? $sede : $base;
+            return null;
+        };
 
         $GLOBALS['config2'] = [];
         $unknownTipo = \empresa_sede::resolveForDocumentType('factura_simplificada', $base, $loader);
         $this->assertNull($unknownTipo);
-        $this->assertSame($base, $adopt($unknownTipo));
+        $this->assertSame(0, $calls, 'an unknown tipo must never reach the loader');
 
         $absentKey = \empresa_sede::resolveForDocumentType('factura', $base, $loader);
         $this->assertNull($absentKey);
-        $this->assertSame($base, $adopt($absentKey));
+        $this->assertSame(0, $calls, 'an absent mapping key must never reach the loader');
 
         $GLOBALS['config2'] = ['empresa_sede_factura' => ''];
         $emptyKey = \empresa_sede::resolveForDocumentType('factura', $base, $loader);
         $this->assertNull($emptyKey);
-        $this->assertSame($base, $adopt($emptyKey));
+        $this->assertSame(0, $calls, 'an empty mapping key must never reach the loader');
 
         $GLOBALS['config2'] = ['empresa_sede_factura' => 'NOPE'];
         $dangling = \empresa_sede::resolveForDocumentType('factura', $base, $loader);
         $this->assertNull($dangling);
-        $this->assertSame($base, $adopt($dangling));
+        $this->assertSame(1, $calls, 'a dangling code must reach the loader exactly once');
 
         $this->assertSame($identity, spl_object_id($base), 'the base instance identity must be preserved');
         $this->assertSame($snapshot['nombre'], $base->nombre);
