@@ -292,11 +292,15 @@ class empresa_sede extends fs_model
      * (`src/Core/Html.php` `system_logo_url` / `system_name`: guarded
      * `class_exists(..., false)` + `require_once FS_FOLDER . '/base/fs_settings.php'`).
      *
-     * The guard is centralized here on purpose: every `fs_settings` use in this
-     * model must go through this accessor so the loading gap cannot reappear at
-     * a second call site.
+     * This is the single plugin-wide guard: `empresa_sede` owns every
+     * `fs_settings` use in business_data (the TIPOS mapping plus
+     * `admin_empresa::persistTraducciones()`). It is public precisely so a
+     * sibling file can reuse it instead of reintroducing the gap with its own
+     * `class_exists('fs_settings')` check, and the controller already requires
+     * this model with a guarded `require_once`, so the class is always present
+     * when the accessor is called.
      */
-    private static function settings(): \fs_settings
+    public static function settings(): \fs_settings
     {
         if (!class_exists('fs_settings', false)) {
             require_once FS_FOLDER . '/base/fs_settings.php';

@@ -693,16 +693,39 @@ class admin_empresa extends fs_controller
             }
         }
 
-        if ($changed) {
-            // Guardar en config2.php usando fs_settings
-            if (class_exists('fs_settings')) {
-                $settings = new fs_settings();
-                foreach ($this->traducciones as $key => $value) {
-                    $settings->set($key, $value);
-                }
-                $settings->save();
-            }
+        if ($changed && !self::persistTraducciones($this->traducciones)) {
+            // Never report success when nothing was written: the previous guard
+            // used the autoloading existence check, which is FALSE on the
+            // modern entry path, so the write was silently skipped.
+            $this->new_error_msg('No se pudieron guardar las traducciones de los documentos.');
         }
+    }
+
+    /**
+     * Persiste las traducciones de documentos en config2.php.
+     *
+     * Seam puro a propósito, igual que `resolveAction()`: `save_traducciones()`
+     * lee de `filter_input()`, que no se puede sustituir en PHPUnit, así que el
+     * camino real de escritura se vuelve testeable desde un entry point limpio
+     * sin SAPI, sesión ni base de datos.
+     *
+     * El guard de `fs_settings` NO se duplica aquí: vive en el único accesor
+     * del plugin, `empresa_sede::settings()`, que carga la clase bajo demanda.
+     * Comprobar su existencia con el formulario de autoload devuelve FALSE en
+     * el entry path moderno y saltaba la escritura en silencio.
+     *
+     * @param array<string, string> $traducciones
+     * @return bool true cuando config2 se ha escrito
+     */
+    public static function persistTraducciones(array $traducciones): bool
+    {
+        $settings = empresa_sede::settings();
+
+        foreach ($traducciones as $key => $value) {
+            $settings->set($key, $value);
+        }
+
+        return $settings->save();
     }
 }
 
