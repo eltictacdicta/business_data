@@ -528,7 +528,9 @@ final class AdminEmpresaDispatchActionTest extends TestCase
 
         require_once FS_FOLDER . '/base/fs_controller.php';
         require_once FS_FOLDER . '/base/fs_core_log.php';
-        require_once FS_FOLDER . '/base/fs_settings.php';
+        // `fs_settings` is deliberately NOT preloaded: `empresa_sede` must
+        // resolve it on demand. Preloading it masked the production fatal; see
+        // EmpresaSedeEntryPointLoadingTest.
         require_once FS_FOLDER . '/plugins/business_data/model/empresa.php';
         require_once FS_FOLDER . '/plugins/business_data/model/empresa_sede.php';
         require_once FS_FOLDER . '/' . self::CONTROLLER;

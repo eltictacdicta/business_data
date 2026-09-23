@@ -93,7 +93,10 @@ final class EmpresaSedeResolutionTest extends TestCase
 
         require_once FS_FOLDER . '/base/fs_model.php';
         require_once FS_FOLDER . '/base/fs_core_log.php';
-        require_once FS_FOLDER . '/base/fs_settings.php';
+        // `fs_settings` is deliberately NOT preloaded here: `empresa_sede`
+        // must resolve it on demand from every entry point. Preloading it in
+        // the setup masked the production `Class "fs_settings" not found`
+        // fatal; see EmpresaSedeEntryPointLoadingTest.
         require_once FS_FOLDER . '/plugins/business_data/model/empresa.php';
         require_once FS_FOLDER . '/plugins/business_data/model/empresa_sede.php';
         self::$baseLoaded = true;

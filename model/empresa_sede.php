@@ -281,11 +281,36 @@ class empresa_sede extends fs_model
     }
 
     /**
+     * Loads `fs_settings` on demand and returns a fresh instance.
+     *
+     * `fs_settings` lives in `base/fs_settings.php` and is NOT reliably
+     * autoloaded: the legacy class map in `base/fs_autoload.php` is not wired
+     * into the modern entry path (`index.php` -> Kernel -> controller), so any
+     * path that reaches this model without a prior explicit `require_once`
+     * fatals with `Class "fs_settings" not found`. The PDF print path is one
+     * such entry point. This mirrors the core precedent verbatim
+     * (`src/Core/Html.php` `system_logo_url` / `system_name`: guarded
+     * `class_exists(..., false)` + `require_once FS_FOLDER . '/base/fs_settings.php'`).
+     *
+     * The guard is centralized here on purpose: every `fs_settings` use in this
+     * model must go through this accessor so the loading gap cannot reappear at
+     * a second call site.
+     */
+    private static function settings(): \fs_settings
+    {
+        if (!class_exists('fs_settings', false)) {
+            require_once FS_FOLDER . '/base/fs_settings.php';
+        }
+
+        return new \fs_settings();
+    }
+
+    /**
      * @return array<string, ?string>
      */
     public static function mapping(): array
     {
-        $settings = new \fs_settings();
+        $settings = self::settings();
         $mapping = [];
 
         foreach (self::TIPOS as $tipo => $key) {
@@ -307,7 +332,7 @@ class empresa_sede extends fs_model
             return FALSE;
         }
 
-        $settings = new \fs_settings();
+        $settings = self::settings();
         $settings->set(self::TIPOS[$tipo], $code);
 
         return $settings->save();
