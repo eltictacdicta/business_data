@@ -33,10 +33,7 @@ class cuenta_banco extends fs_model
     public $descripcion;
     public $iban;
     public $swift;
-    public $entidad;
-    public $oficina;
-    public $dc;
-    public $cuenta;
+    public $codsubcuenta;
 
     public function __construct($data = FALSE)
     {
@@ -46,10 +43,7 @@ class cuenta_banco extends fs_model
             $this->descripcion = $data['descripcion'] ?? '';
             $this->iban = $data['iban'] ?? '';
             $this->swift = $data['swift'] ?? '';
-            $this->entidad = $data['entidad'] ?? '';
-            $this->oficina = $data['oficina'] ?? '';
-            $this->dc = $data['dc'] ?? '';
-            $this->cuenta = $data['cuenta'] ?? '';
+            $this->codsubcuenta = $data['codsubcuenta'] ?? null;
         } else {
             $this->clear();
         }
@@ -95,6 +89,13 @@ class cuenta_banco extends fs_model
         $this->iban = $this->no_html($this->iban);
         $this->swift = $this->no_html($this->swift);
 
+        if ($this->codsubcuenta !== null) {
+            $this->codsubcuenta = $this->no_html($this->codsubcuenta);
+            if ($this->codsubcuenta === '') {
+                $this->codsubcuenta = null;
+            }
+        }
+
         $codcuenta = (string) ($this->codcuenta ?? '');
         if ($codcuenta === '' || !preg_match('/^[A-Z0-9]{1,6}$/i', $codcuenta)) {
             $this->new_error_msg("Código de cuenta bancaria no válido.");
@@ -115,22 +116,16 @@ class cuenta_banco extends fs_model
                 $sql = "UPDATE " . $this->table_name . " SET descripcion = " . $this->var2str($this->descripcion) .
                     ", iban = " . $this->var2str($this->iban) .
                     ", swift = " . $this->var2str($this->swift) .
-                    ", entidad = " . $this->var2str($this->entidad) .
-                    ", oficina = " . $this->var2str($this->oficina) .
-                    ", dc = " . $this->var2str($this->dc) .
-                    ", cuenta = " . $this->var2str($this->cuenta) .
+                    ", codsubcuenta = " . $this->var2str($this->codsubcuenta) .
                     self::SQL_WHERE . self::PK_CODCUENTA . $this->var2str($this->codcuenta) . ";";
                 return $this->db->exec($sql);
             } else {
-                $sql = "INSERT INTO " . $this->table_name . " (codcuenta,descripcion,iban,swift,entidad,oficina,dc,cuenta) VALUES (" .
+                $sql = "INSERT INTO " . $this->table_name . " (codcuenta,descripcion,iban,swift,codsubcuenta) VALUES (" .
                     $this->var2str($this->codcuenta) . "," .
                     $this->var2str($this->descripcion) . "," .
                     $this->var2str($this->iban) . "," .
                     $this->var2str($this->swift) . "," .
-                    $this->var2str($this->entidad) . "," .
-                    $this->var2str($this->oficina) . "," .
-                    $this->var2str($this->dc) . "," .
-                    $this->var2str($this->cuenta) . ");";
+                    $this->var2str($this->codsubcuenta) . ");";
                 return $this->db->exec($sql);
             }
         } else {
@@ -188,9 +183,6 @@ class cuenta_banco extends fs_model
         $this->descripcion = '';
         $this->iban = '';
         $this->swift = '';
-        $this->entidad = '';
-        $this->oficina = '';
-        $this->dc = '';
-        $this->cuenta = '';
+        $this->codsubcuenta = NULL;
     }
 }
